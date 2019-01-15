@@ -43,22 +43,24 @@ object Main {
   def startClusterInSameJvm(): Unit = {
     startCassandraDatabase()
 
+
+
     // two backend nodes
-    startBackEnd(2551, ResultsTopic1)
-    startBackEnd(2552, ResultsTopic1)
+    cluster.tcs.Tcs.startBackEnd(2551, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1)
+    cluster.tcs.Tcs.startBackEnd(2552, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1)
     // two front-end nodes
     startFrontEnd(3000)
     startFrontEnd(3001)
     // two worker nodes with two worker actors each
-    startWorker(5001, 2)
-    startWorker(5002, 2)
+    cluster.tcs.Tcs.startWorker(5001, 2, singletonName1, singletonRole1,  () => WorkExecutor1.props)
+    cluster.tcs.Tcs.startWorker(5002, 2, singletonName1, singletonRole1,  () => WorkExecutor1.props)
   }
 
   /**
    * Start a node with the role backend on the given port. (This may also
    * start the shared journal, see below for details)
    */
-  def startBackEnd(port: Int, resultsTopic: String): Unit =  cluster.tcs.Tcs.startBackEnd(port, resultsTopic)
+  //def startBackEnd(port: Int, resultsTopic: String): Unit =  cluster.tcs.Tcs.startBackEnd(port, resultsTopic)
 
 
   /**
@@ -76,7 +78,7 @@ object Main {
    * Start a worker node, with n actual workers that will accept and process workloads
    */
   // #worker
-  def startWorker(port: Int, workers: Int): Unit = cluster.tcs.Tcs.startWorker(port, workers, () => WorkExecutor1.props)
+  //def startWorker(port: Int, workers: Int): Unit = cluster.tcs.Tcs.startWorker(port, workers, () => WorkExecutor1.props)
   // #worker
 
   def config(port: Int, role: String): Config =

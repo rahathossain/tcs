@@ -7,16 +7,19 @@ import scala.concurrent.duration._
 
 object MasterSingleton {
 
-  private val singletonName = "master"
-  private val singletonRole = "back-end"
+
+  //private val singletonName = "master"
+  //private val singletonRole = "back-end"
 
   // #singleton
-  def startSingleton(system: ActorSystem, resultTopic: String) = {
+  def startSingleton(system: ActorSystem,
+                     singletonName: String, singletonRole: String,
+                     inTopic: String , resultTopic: String) = {
     val workTimeout = system.settings.config.getDuration("distributed-workers.work-timeout").getSeconds.seconds
 
     system.actorOf(
       ClusterSingletonManager.props(
-        Master.props(workTimeout, resultTopic),
+        Master.props(id=singletonName, workTimeout, inTopic, resultTopic),
         PoisonPill,
         ClusterSingletonManagerSettings(system).withRole(singletonRole)
       ),
@@ -25,7 +28,8 @@ object MasterSingleton {
   // #singleton
 
   // #proxy
-  def proxyProps(system: ActorSystem) = ClusterSingletonProxy.props(
+  def proxyProps(system: ActorSystem,
+                 singletonName: String, singletonRole: String) = ClusterSingletonProxy.props(
     settings = ClusterSingletonProxySettings(system).withRole(singletonRole),
     singletonManagerPath = s"/user/$singletonName")
   // #proxy

@@ -11,8 +11,8 @@ import scala.concurrent.duration.{Deadline, FiniteDuration, _}
  */
 object Master {
 
-  def props(workTimeout: FiniteDuration, resultsTopic: String): Props =
-    Props(new Master(workTimeout, resultsTopic))
+  def props(id: String, workTimeout: FiniteDuration, inTopic: String ,resultsTopic: String): Props =
+    Props(new Master(id, workTimeout, inTopic, resultsTopic))
 
   case class Ack(workId: String)
 
@@ -25,12 +25,13 @@ object Master {
 
 }
 
-class Master(workTimeout: FiniteDuration, resultsTopic: String) extends Timers with PersistentActor with ActorLogging {
+class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTopic: String)
+                          extends Timers with PersistentActor with ActorLogging {
   import Master._
   import WorkState._
   import context.dispatcher
 
-  override val persistenceId: String = "master"
+  override val persistenceId: String = id
 
   val considerWorkerDeadAfter: FiniteDuration =
     context.system.settings.config.getDuration("distributed-workers.consider-worker-dead-after").getSeconds.seconds
@@ -39,6 +40,8 @@ class Master(workTimeout: FiniteDuration, resultsTopic: String) extends Timers w
   timers.startPeriodicTimer("cleanup", CleanupTick, workTimeout / 2)
 
   val mediator: ActorRef = DistributedPubSub(context.system).mediator
+
+  //TODO inTopic - need to subscribe
 
   // the set of available workers is not event sourced as it depends on the current set of workers
   private var workers = Map[String, WorkerState]()
