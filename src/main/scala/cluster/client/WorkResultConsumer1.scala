@@ -22,6 +22,10 @@ class WorkResultConsumer1 extends Actor with ActorLogging {
     case _: DistributedPubSubMediator.SubscribeAck =>
     case WorkResult(workId, result) =>
       log.info("Consumed result: {}", result)
+      val i = result.toString.indexOf('=')
+      val x = result.toString.substring(i+1).trim
+
+      mediator ! DistributedPubSubMediator.Publish(AppConfig.inTopic2, Work( workId, x.toInt) )
   }
 
 }

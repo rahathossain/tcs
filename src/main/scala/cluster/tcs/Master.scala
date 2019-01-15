@@ -4,6 +4,7 @@ import akka.actor.{ActorLogging, ActorRef, Cancellable, Props, Timers}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 
+
 import scala.concurrent.duration.{Deadline, FiniteDuration, _}
 
 /**
@@ -41,6 +42,8 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
 
   val mediator: ActorRef = DistributedPubSub(context.system).mediator
 
+  mediator ! DistributedPubSubMediator.Subscribe(inTopic, self)
+
   //TODO inTopic - need to subscribe
 
   // the set of available workers is not event sourced as it depends on the current set of workers
@@ -69,6 +72,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
   }
 
   override def receiveCommand: Receive = {
+    case _: DistributedPubSubMediator.SubscribeAck =>
     case MasterWorkerProtocol.RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
         workers += (workerId -> workers(workerId).copy(ref = sender(), staleWorkerDeadline = newStaleWorkerDeadline()))
