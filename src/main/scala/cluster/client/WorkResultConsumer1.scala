@@ -43,7 +43,7 @@ class WorkResultConsumer2 extends Actor with ActorLogging {
   import AppConfig._
 
   val mediator = DistributedPubSub(context.system).mediator
-  mediator ! DistributedPubSubMediator.Subscribe(ResultsTopic1, self)
+  mediator ! DistributedPubSubMediator.Subscribe(ResultsTopic2, self)
 
   def receive = {
     case _: DistributedPubSubMediator.SubscribeAck =>

@@ -48,7 +48,7 @@ object Main {
     cluster.tcs.Tcs.startBackEnd(2562, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2)
     // two front-end nodes
     startFrontEnd2(3010)
-    startFrontEnd2(3011)
+    //startFrontEnd2(3011)
     // two worker nodes with two worker actors each
     cluster.tcs.Tcs.startWorker(5011, 2, singletonName2, singletonRole2,  () => WorkExecutor2.props)
     cluster.tcs.Tcs.startWorker(5012, 2, singletonName2, singletonRole2,  () => WorkExecutor2.props)
@@ -58,7 +58,7 @@ object Main {
     cluster.tcs.Tcs.startBackEnd(2552, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1)
     // two front-end nodes
     startFrontEnd1(3000)
-    startFrontEnd1(3001)
+    //startFrontEnd1(3001)
     // two worker nodes with two worker actors each
     cluster.tcs.Tcs.startWorker(5001, 2, singletonName1, singletonRole1,  () => WorkExecutor1.props)
     cluster.tcs.Tcs.startWorker(5002, 2, singletonName1, singletonRole1,  () => WorkExecutor1.props)
