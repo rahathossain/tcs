@@ -1,6 +1,7 @@
 package cluster.tcs
 
 import akka.actor.{ActorSystem, Props}
+import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import cluster.client.Main.config
 
 object Tcs {
@@ -28,12 +29,19 @@ object Tcs {
                   workExecutorProps: WorkExecutorProtocol.WorkExecutorProps): Unit = {
     val system = ActorSystem("ClusterSystem", config(port, "worker"))
     val masterProxy = system.actorOf(
-          MasterSingleton.proxyProps(system, singletonName, singletonRole), name = "masterProxy")
+          proxyProps(system, singletonName, singletonRole), name = "masterProxy")
 
     (1 to workers).foreach(n =>
       system.actorOf(Worker.props(masterProxy, workExecutorProps), s"worker-$n")
     )
   }
   // #worker
+
+  // #proxy
+  def proxyProps(system: ActorSystem, singletonName: String, singletonRole: String) =
+    ClusterSingletonProxy.props(
+      settings = ClusterSingletonProxySettings(system).withRole(singletonRole),
+      singletonManagerPath = s"/user/$singletonName")
+  // #proxy
 
 }

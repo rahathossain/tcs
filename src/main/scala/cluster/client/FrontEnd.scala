@@ -30,7 +30,7 @@ class FrontEnd extends Actor with ActorLogging with Timers {
   import AppConfig._
 
   val masterProxy = context.actorOf(
-        MasterSingleton.proxyProps(context.system, singletonName1, singletonRole1),
+        cluster.tcs.Tcs.proxyProps(context.system, singletonName1, singletonRole1),
         name = "masterProxy")
 
   var workCounter = 0

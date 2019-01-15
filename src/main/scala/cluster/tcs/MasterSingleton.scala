@@ -7,10 +7,6 @@ import scala.concurrent.duration._
 
 object MasterSingleton {
 
-
-  //private val singletonName = "master"
-  //private val singletonRole = "back-end"
-
   // #singleton
   def startSingleton(system: ActorSystem,
                      singletonName: String, singletonRole: String,
@@ -27,10 +23,5 @@ object MasterSingleton {
   }
   // #singleton
 
-  // #proxy
-  def proxyProps(system: ActorSystem,
-                 singletonName: String, singletonRole: String) = ClusterSingletonProxy.props(
-    settings = ClusterSingletonProxySettings(system).withRole(singletonRole),
-    singletonManagerPath = s"/user/$singletonName")
-  // #proxy
+
 }
