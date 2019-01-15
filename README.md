@@ -49,5 +49,14 @@ def startWorker(port: Int, workers: Int,
                 workExecutorProps: WorkExecutorProtocol.WorkExecutorProps)
 ``` 
 
+To get proxy Props for the cluster singleton, need to supply 
+* ActorSystem
+* singletonName as String 
+* singletonRole name as String  
+
+```scala 
+def proxyProps(system: ActorSystem, 
+                singletonName: String, singletonRole: String)
+```
 
 
