@@ -15,7 +15,7 @@ object Tcs {
   def startBackEnd(port: Int,
                    singletonName: String, singletonRole: String,
                    inTopic: String ,resultTopic: String): Unit = {
-    val system = ActorSystem("ClusterSystem", config(port, "back-end"))
+    val system = ActorSystem("ClusterSystem", config(port, singletonRole))
     MasterSingleton.startSingleton(system, singletonName, singletonRole, inTopic, resultTopic)
   }
 

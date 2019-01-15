@@ -43,17 +43,26 @@ object Main {
   def startClusterInSameJvm(): Unit = {
     startCassandraDatabase()
 
-
+    // two backend nodes
+    cluster.tcs.Tcs.startBackEnd(2561, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2)
+    cluster.tcs.Tcs.startBackEnd(2562, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2)
+    // two front-end nodes
+    startFrontEnd2(3010)
+    startFrontEnd2(3011)
+    // two worker nodes with two worker actors each
+    cluster.tcs.Tcs.startWorker(5011, 2, singletonName2, singletonRole2,  () => WorkExecutor2.props)
+    cluster.tcs.Tcs.startWorker(5012, 2, singletonName2, singletonRole2,  () => WorkExecutor2.props)
 
     // two backend nodes
     cluster.tcs.Tcs.startBackEnd(2551, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1)
     cluster.tcs.Tcs.startBackEnd(2552, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1)
     // two front-end nodes
-    startFrontEnd(3000)
-    startFrontEnd(3001)
+    startFrontEnd1(3000)
+    startFrontEnd1(3001)
     // two worker nodes with two worker actors each
     cluster.tcs.Tcs.startWorker(5001, 2, singletonName1, singletonRole1,  () => WorkExecutor1.props)
     cluster.tcs.Tcs.startWorker(5002, 2, singletonName1, singletonRole1,  () => WorkExecutor1.props)
+
   }
 
   /**
@@ -67,10 +76,16 @@ object Main {
    * Start a front end node that will submit work to the backend nodes
    */
   // #front-end
-  def startFrontEnd(port: Int): Unit = {
+  def startFrontEnd1(port: Int): Unit = {
     val system = ActorSystem("ClusterSystem", config(port, "front-end"))
     system.actorOf(FrontEnd.props, "front-end")
     system.actorOf(WorkResultConsumer1.props, "consumer")
+  }
+
+  def startFrontEnd2(port: Int): Unit = {
+    val system = ActorSystem("ClusterSystem", config(port, "front-end"))
+    //system.actorOf(FrontEnd.props, "front-end")
+    system.actorOf(WorkResultConsumer2.props, "consumer")
   }
   // #front-end
 
