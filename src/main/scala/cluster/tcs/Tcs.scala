@@ -2,7 +2,7 @@ package cluster.tcs
 
 import akka.actor.{ActorSystem, Props}
 import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
-import cluster.client.Main.config
+import com.typesafe.config.{Config, ConfigFactory}
 
 object Tcs {
 
@@ -43,5 +43,49 @@ object Tcs {
       settings = ClusterSingletonProxySettings(system).withRole(singletonRole),
       singletonManagerPath = s"/user/$singletonName")
   // #proxy
+
+  def config(port: Int, role: String): Config =
+    ConfigFactory.parseString(s"""
+      akka.remote.netty.tcp.port=$port
+      akka.cluster.roles=[$role]
+    """).withFallback(ConfigFactory.load())
+
+}
+
+class Tcs(port: Int, singletonName: String, singletonRole: String, val inTopic: String ,val resultTopic: String,
+          workExecutorProps: WorkExecutorProtocol.WorkExecutorProps) {
+
+  import Tcs._
+
+  val system = ActorSystem("ClusterSystem", config(port, "front-end"))
+
+  def startCS(port: Int) = Tcs.startCS(port, singletonName, singletonRole, inTopic, resultTopic)
+  def startWorker(port: Int, workers: Int) =
+            Tcs.startWorker(port, workers, singletonName, singletonRole, workExecutorProps)
+
+
+
+  /**
+    * Start a front end node that will submit work to the backend nodes
+    */
+  def startFrontEnd(frontEndProps:  (Props) => Props ) =
+          system.actorOf(frontEndProps(proxyProps), "front-end")
+
+  def proxyProps = Tcs.proxyProps(system, singletonName, singletonRole)
+
+  def startResultConsumer(props: (String) => Props) = system.actorOf(props(resultTopic), "consumer")
+
+
+  def pipeTo(transform: Any => Any, otherTcs: Tcs) =
+    system.actorOf(WorkResultTransfer.props(transform, resultTopic, otherTcs.inTopic), "transfer-transform")
+
+  def pipeTo(otherTcs: Tcs) =
+      system.actorOf(WorkResultTransfer.props((_: Any)=>_ , resultTopic, otherTcs.inTopic), "transfer")
+
+  def --> (otherTcs: Tcs) =
+    system.actorOf(WorkResultTransfer.props((_: Any)=>_, resultTopic, otherTcs.inTopic), "transfer-forward")
+
+  def <-- (otherTcs: Tcs) =
+    system.actorOf(WorkResultTransfer.props((_: Any)=>_, otherTcs.resultTopic, inTopic), "transfer-backward")
 
 }

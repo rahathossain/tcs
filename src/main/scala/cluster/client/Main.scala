@@ -5,6 +5,7 @@ import java.util.concurrent.CountDownLatch
 
 import akka.actor.ActorSystem
 import akka.persistence.cassandra.testkit.CassandraLauncher
+import cluster.tcs.Tcs
 import com.typesafe.config.{Config, ConfigFactory}
 
 object Main {
@@ -43,25 +44,33 @@ object Main {
   def startClusterInSameJvm(): Unit = {
     startCassandraDatabase()
 
+    val tcs2 = new Tcs(3010, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2, () => WorkExecutor2.props )
     // two backend nodes
-    cluster.tcs.Tcs.startCS(2561, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2)
-    cluster.tcs.Tcs.startCS(2562, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2)
-    // two front-end nodes
-    startFrontEnd2(3010)
-    //startFrontEnd2(3011)
-    // two worker nodes with two worker actors each
-    cluster.tcs.Tcs.startWorker(5011, 2, singletonName2, singletonRole2,  () => WorkExecutor2.props)
-    cluster.tcs.Tcs.startWorker(5012, 2, singletonName2, singletonRole2,  () => WorkExecutor2.props)
+    tcs2.startCS(2561)
+    tcs2.startCS(2562)
 
-    // two backend nodes
-    cluster.tcs.Tcs.startCS(2551, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1)
-    cluster.tcs.Tcs.startCS(2552, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1)
-    // two front-end nodes
-    startFrontEnd1(3000)
-    //startFrontEnd1(3001)
+
+    tcs2.startResultConsumer(WorkResultConsumer.props)
+
+    //tcs2.startFrontEnd()
+
     // two worker nodes with two worker actors each
-    cluster.tcs.Tcs.startWorker(5001, 2, singletonName1, singletonRole1,  () => WorkExecutor1.props)
-    cluster.tcs.Tcs.startWorker(5002, 2, singletonName1, singletonRole1,  () => WorkExecutor1.props)
+    tcs2.startWorker(5011, 2)
+    tcs2.startWorker(5012, 2)
+
+
+    val tcs1 = new Tcs(3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1, () => WorkExecutor1.props )
+    // two backend nodes
+    tcs1.startCS(2551)
+    tcs1.startCS(2552)
+    // two front-end nodes
+
+    tcs1.startFrontEnd(FrontEnd.props)
+    tcs1.pipeTo(transform1, tcs2)
+
+    // two worker nodes with two worker actors each
+    tcs1.startWorker(5001, 2 )
+    tcs1.startWorker(5002, 2)
 
   }
 
@@ -72,20 +81,11 @@ object Main {
   //def startBackEnd(port: Int, resultsTopic: String): Unit =  cluster.tcs.Tcs.startBackEnd(port, resultsTopic)
 
 
-  /**
-   * Start a front end node that will submit work to the backend nodes
-   */
-  // #front-end
-  def startFrontEnd1(port: Int): Unit = {
-    val system = ActorSystem("ClusterSystem", config(port, "front-end"))
-    system.actorOf(FrontEnd.props, "front-end")
-    system.actorOf(WorkResultConsumer1.props, "consumer")
-  }
 
   def startFrontEnd2(port: Int): Unit = {
     val system = ActorSystem("ClusterSystem", config(port, "front-end"))
     //system.actorOf(FrontEnd.props, "front-end")
-    system.actorOf(WorkResultConsumer2.props, "consumer")
+    system.actorOf(WorkResultConsumer.props(ResultsTopic2), "consumer")
   }
   // #front-end
 
@@ -120,6 +120,12 @@ object Main {
     sys.addShutdownHook {
       CassandraLauncher.stop()
     }
+  }
+
+  def transform1(result: Any): Int = {
+    val i = result.toString.indexOf('=')
+    val x = result.toString.substring(i+1).trim
+    x.toInt
   }
 
 }

@@ -16,7 +16,7 @@ import cluster.tcs._
  */
 object FrontEnd {
 
-  def props: Props = Props(new FrontEnd)
+  def props(proxyProps: Props): Props = Props(new FrontEnd(proxyProps))
 
   private case object NotOk
   private case object Tick
@@ -24,14 +24,11 @@ object FrontEnd {
 }
 
 // #front-end
-class FrontEnd extends Actor with ActorLogging with Timers {
+class FrontEnd(proxyProps: Props) extends Actor with ActorLogging with Timers {
   import FrontEnd._
   import context.dispatcher
-  import AppConfig._
 
-  val masterProxy = context.actorOf(
-        cluster.tcs.Tcs.proxyProps(context.system, singletonName1, singletonRole1),
-        name = "masterProxy")
+  val masterProxy = context.actorOf(proxyProps, name = "masterProxy" )
 
   var workCounter = 0
 
