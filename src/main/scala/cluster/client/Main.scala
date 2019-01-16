@@ -78,16 +78,7 @@ object Main {
    * Start a node with the role backend on the given port. (This may also
    * start the shared journal, see below for details)
    */
-  //def startBackEnd(port: Int, resultsTopic: String): Unit =  cluster.tcs.Tcs.startBackEnd(port, resultsTopic)
 
-
-
-  def startFrontEnd2(port: Int): Unit = {
-    val system = ActorSystem("ClusterSystem", config(port, "front-end"))
-    //system.actorOf(FrontEnd.props, "front-end")
-    system.actorOf(WorkResultConsumer.props(ResultsTopic2), "consumer")
-  }
-  // #front-end
 
   /**
    * Start a worker node, with n actual workers that will accept and process workloads
