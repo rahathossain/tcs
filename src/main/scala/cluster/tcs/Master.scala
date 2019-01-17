@@ -157,7 +157,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
       if (workState.isAccepted(work.workId)) {
         sender() ! Master.Ack(work.workId)
       } else {
-        log.info("Accepted work: {}", work.workId)
+        log.info("Accepted work: {} - by {}", work.workId, id)
         persist(WorkAccepted(work)) { event ⇒
           // Ack back to original sender
           sender() ! Master.Ack(work.workId)

@@ -1,6 +1,6 @@
 package cluster.tcs
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -76,16 +76,17 @@ class Tcs(port: Int, singletonName: String, singletonRole: String, val inTopic: 
   def startResultConsumer(props: (String) => Props) = system.actorOf(props(resultTopic), "consumer")
 
 
-  def pipeTo(transform: Any => Any, otherTcs: Tcs) =
-    system.actorOf(WorkResultTransfer.props(transform, resultTopic, otherTcs.inTopic), "transfer-transform")
+  private def pipeTo(transform: Any => Any, fromTopic: String, toTopic: String): ActorRef =
+      system.actorOf(WorkResultTransfer.props(transform, fromTopic, toTopic) )
 
-  def pipeTo(otherTcs: Tcs) =
-      system.actorOf(WorkResultTransfer.props((_: Any)=>_ , resultTopic, otherTcs.inTopic), "transfer")
+  def pipeTo(otherTcs: Tcs): ActorRef = pipeTo( (_: Any)=>_ , resultTopic, otherTcs.inTopic)
+  def pipeTo(transform: Any => Any, otherTcs: Tcs): ActorRef = pipeTo(transform, resultTopic, otherTcs.inTopic)
 
-  def --> (otherTcs: Tcs) =
-    system.actorOf(WorkResultTransfer.props((_: Any)=>_, resultTopic, otherTcs.inTopic), "transfer-forward")
 
-  def <-- (otherTcs: Tcs) =
-    system.actorOf(WorkResultTransfer.props((_: Any)=>_, otherTcs.resultTopic, inTopic), "transfer-backward")
+  def --> (otherTcs: Tcs): ActorRef = pipeTo(otherTcs)
+  def --> (transform: Any => Any, otherTcs: Tcs): ActorRef = pipeTo(transform, otherTcs)
+
+  def <-- (otherTcs: Tcs): ActorRef = pipeTo((_: Any)=>_, otherTcs.resultTopic, inTopic)
+  def <-- (transform: Any => Any, otherTcs: Tcs): ActorRef = pipeTo(transform, otherTcs.resultTopic, inTopic)
 
 }
