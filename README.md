@@ -74,9 +74,9 @@ def startWorker(port: Int, workers: Int)
      it copy result from tcs1.resultsTopic to tcs2.inTopic. payload can be transformed 
      while copying using `tcs1 --> (transform, tcs2) ` where `transform` is Any => Any     
       
-  - sprayTo or --E, is basically splitter. This can be used if we have `List[Any]` as `tcs1.resultsTopic`
+  - sprayTo, is basically splitter. This can be used if we have `List[Any]` as `tcs1.resultsTopic`
     and we want extract the values out of the list and put onto `tcs2.inTopic` one by one. function can be
-    called as `tcs1 --E tcs2`  or along with transform `tcs1 --E (transform, tcs2)`
+    called as `tcs1 sprayTo tcs2`  or along with transform `tcs1 sprayTo (transform, tcs2)`
     
   - routeTo -- TODO    
   - 
