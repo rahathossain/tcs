@@ -66,9 +66,12 @@ object Main {
     // two front-end nodes
 
     tcs1.startFrontEnd(FrontEnd.props)
+
     tcs1.pipeTo(transform1, tcs2)
-    tcs1.pipeTo(transform1, tcs2)
-    tcs1.pipeTo(transform1, tcs2)
+
+    tcs1  --> (transform1, tcs2)
+
+    tcs1  --> (transform1, tcs2)
 
     // two worker nodes with two worker actors each
     tcs1.startWorker(5001, 2 )

@@ -68,3 +68,15 @@ configured by just providing the 2nd parameter.
 def startWorker(port: Int, workers: Int) 
 ``` 
 
+# TCS connector functions  
+* create more actors and utility:
+  - pipeTo or --> , can be used to connect two TCS, tcs1 and tcs2. `tcs1 --> tcs2` means, 
+     it copy result from tcs1.resultsTopic to tcs2.inTopic. payload can be transformed 
+     while copying using `tcs1 --> (transform, tcs2) ` where `transform` is Any => Any     
+      
+  - sprayTo or --E, is basically splitter. This can be used if we have `List[Any]` as `tcs1.resultsTopic`
+    and we want extract the values out of the list and put onto `tcs2.inTopic` one by one. function can be
+    called as `tcs1 --E tcs2`  or along with transform `tcs1 --E (transform, tcs2)`
+    
+  - routeTo -- TODO    
+  - 
