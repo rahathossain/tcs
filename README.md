@@ -77,9 +77,7 @@ def startWorker(port: Int, workers: Int)
   - sprayTo, is basically splitter. This can be used if we have `List[Any]` as `tcs1.resultsTopic`
     and we want extract the values out of the list and put onto `tcs2.inTopic` one by one. function can be
     called as `tcs1 sprayTo tcs2`  or along with transform `tcs1 sprayTo (transform, tcs2)`
-    
-  - routeTo -- TODO    WorkResultRouter
-  - 
+   
   
 # TODO
 * At the moment there's no timeout options for TCS worker.  
