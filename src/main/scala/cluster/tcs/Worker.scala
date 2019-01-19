@@ -80,7 +80,7 @@ class Worker(masterProxy: ActorRef, workExecutorProps: WorkExecutorProtocol.Work
   def createWorkExecutor(): ActorRef =
     // in addition to starting the actor we also watch it, so that
     // if it stops this worker will also be stopped
-    context.watch(context.actorOf(workExecutorProps.apply(), "work-executor"))
+    context.watch(context.actorOf(workExecutorProps(), "work-executor"))
 
 
   override def supervisorStrategy = OneForOneStrategy() {

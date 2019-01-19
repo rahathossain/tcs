@@ -71,7 +71,7 @@ object Main {
 
     tcs1  --> (transform1, tcs2)
 
-    tcs1  --> (transform1, tcs2)
+    tcs1 --> (transform1, tcs2)
 
     // two worker nodes with two worker actors each
     tcs1.startWorker(5001, 2 )

@@ -95,4 +95,14 @@ class Tcs(port: Int, singletonName: String, singletonRole: String, val inTopic: 
   def sprayTo(otherTcs: Tcs): ActorRef = sprayTo( (_: Any)=>_ , resultTopic, otherTcs.inTopic)
   def sprayTo(transform: Any => Any, otherTcs: Tcs): ActorRef = sprayTo(transform, resultTopic, otherTcs.inTopic)
 
+  private def routeTo(transform: Any => Any, condition: Any => Boolean, fromTopic: String,
+                      eitherTopic: String, orTopic: String): ActorRef =
+    system.actorOf(WorkResultRouter.props(transform, condition, fromTopic, eitherTopic, orTopic) )
+
+  def routeTo(condition: Any => Boolean, eitherTcs: Tcs, orTcs: Tcs): ActorRef =
+    routeTo((_:Any)=>_, condition, this.resultTopic, eitherTcs.inTopic, orTcs.inTopic)
+
+  def routeTo(transform: Any => Any, condition: Any => Boolean, eitherTcs: Tcs, orTcs: Tcs): ActorRef =
+    routeTo(transform, condition, this.resultTopic, eitherTcs.inTopic, orTcs.inTopic)
+
 }

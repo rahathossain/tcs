@@ -26,6 +26,6 @@ class WorkResultSplitter(transform: Any => Any, subscribeTo: String, publishTo: 
   }
 
 }
-// #work-result-consumer
+
 
 
