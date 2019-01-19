@@ -70,13 +70,20 @@ def startWorker(port: Int, workers: Int)
 
 # TCS connector functions  
 * create more actors and utility:
-  - pipeTo or --> , can be used to connect two TCS, tcs1 and tcs2. `tcs1 --> tcs2` means, 
-     it copy result from tcs1.resultsTopic to tcs2.inTopic. payload can be transformed 
-     while copying using `tcs1 --> (transform, tcs2) ` where `transform` is Any => Any     
+  - pipeTo (or `-->`) , can be used to connect two TCS, tcs1 and tcs2. `tcs1 --> tcs2` means, 
+     it copy result from tcs1.resultsTopic to tcs2.inTopic, which is input topic for tcs2. 
+     pipeTo is overloaded function, it support transformation of payload as well while passing
+     payload from `tcs1` to `tcs2`. To transform payload while copying use 
+     `tcs1 --> (transform, tcs2) ` where `transform` is Any => Any     
       
   - sprayTo, is basically splitter. This can be used if we have `List[Any]` as `tcs1.resultsTopic`
     and we want extract the values out of the list and put onto `tcs2.inTopic` one by one. function can be
     called as `tcs1 sprayTo tcs2`  or along with transform `tcs1 sprayTo (transform, tcs2)`
+    
+  - routeTo, provide an option to send result payload of `tcs1` to either `tcs2` or `tcs3` based on supplied 
+     condition i.e. `routeTo(condition, tcs2, tcs3)` , like above functions, this is also an overloaded 
+     function and overloaded version support transformation, `routeTo(transform, conditition, tcs2, tcs3)`
+     where `transform` is `Any => Any` and `condition` is `Any => Boolean`
    
   
 # TODO
