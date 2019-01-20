@@ -3,22 +3,41 @@ Team of Cluster Singleton
 
 # What is cluster singleton ?
 
-Cluster Singleton manages one singleton actor instance among all cluster nodes or a group of nodes tagged with a specific role.
+Cluster Singleton manages one singleton actor instance among all cluster nodes or 
+a group of nodes tagged with a specific role.
 In akka, the cluster singleton is a pattern, implemented by `akka.cluster.singleton.ClusterSingletonManager`. 
 
 <https://doc.akka.io/docs/akka/2.5/cluster-singleton.html>
 
-# What is TCS  
+# What is TCS (Team of Cluster Singleton)  
+
+Idea of TCS from lightbend demo project, <https://developer.lightbend.com/guides/akka-distributed-workers-scala/>
+
+The above demo shows the technique of creation of cluster singleton `Master` nodes, where only one `Master` node
+can be active in a cluster and rest of the `Master` nodes would be standby mode. All the `Worker` nodes in the 
+cluster register themselves with `Master` node, so `Master` node can assign work to them. However, `Worker` nodes
+are actually act like middle manager, they spawn `WorkExecutor` actors which does the actual work. `FrontEnd` node
+holds the functionally to submit the work request to `Master` nodes and also consumed the result of the requested 
+work which is performed by `Master` and `Worker` nodes. 
+
+The above demo can perform one type of work. If we need to perform series of different types of work one after 
+another than we simply need multiple copy of the above module and wire them together. TCS tries to provide that
+cascading functionality out of the box. 
+ 
 
 TCS is a simple API using cluster singleton (e.g. Cluston) with following characteristics
 
-1. TCS have one Cluston with persistent actor and Worker actors but no Work Executor, so you have the option to write your own custom Work Executor 
+1. TCS have one Cluston with persistent actor and Worker actors but no Work Executor, 
+    so you have the option to write your own custom Work Executor 
 2. TCS subscribe to a supplied topic `inTopic` and publish to another topic `resultsTopic`   
 3. TCS perform the work request what ever posted on `inTopic` and publish result on `resultsTopic` 
 4. TCS has a persistentID, TCS uses the supplied singletonName as  persistentID
 5. TCS does provide protocol messages to be used for the your WorkExecutors 
 6. TCS expect number of Worker count e.g. `workerCount` 
-7. One TCS can forward it's results to another TCS by piping it's `resultsTopic` to other's `inTopic` and vice versa 
+7. One TCS can forward it's results to another TCS by piping it's `resultsTopic` to other's `inTopic` by using
+   `pipeTo` function. TCS also have `routeTo` function to perform routing results between two TCSs  
+   and also `sprayTo` function which is just work as a splitter.  
+       
 
 # Parameters for TCS
 
