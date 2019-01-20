@@ -9,23 +9,29 @@ In akka, the cluster singleton is a pattern, implemented by `akka.cluster.single
 
 <https://doc.akka.io/docs/akka/2.5/cluster-singleton.html>
 
-# What is TCS (Team of Cluster Singleton)  
+# What is Team of Cluster Singleton or TCS?
 
-Idea of TCS from lightbend demo project, <https://developer.lightbend.com/guides/akka-distributed-workers-scala/>
+Team of cluster singleton or TCS is a cluster of distributed actors around the cluster singleton actor, which may 
+perform a specific type of work. TCS can be highly available, resilient, elastic and distributed. Note that, 
+cluster singleton alone can't do the complete unit of work, it require worker and helpers actors, that's why the we 
+need a team, which we call team of cluster singleton.    
 
-The above demo shows the technique of creation of cluster singleton `Master` nodes, where only one `Master` node
-can be active in a cluster and rest of the `Master` nodes would be standby mode. All the `Worker` nodes in the 
-cluster register themselves with `Master` node, so `Master` node can assign work to them. However, `Worker` nodes
-are actually act like middle manager, they spawn `WorkExecutor` actors which does the actual work. `FrontEnd` node
-holds the functionally to submit the work request to `Master` nodes and also consumed the result of the requested 
-work which is performed by `Master` and `Worker` nodes. 
+Inspiration of TCS came from lightbend demo project, 
+<https://developer.lightbend.com/guides/akka-distributed-workers-scala/>
+
+The above demo shows, how to create cluster singleton `Master` nodes, where only one `Master` node
+is active in a cluster and rest of the `Master` nodes are standby. All the `Worker` nodes in the 
+cluster register themselves with `Master` node. `Master` node assign work to registered `Worker` nodes. 
+However, `Worker` nodes are actually middle manager, they spawn `WorkExecutor` actors which does the actual work. 
+`FrontEnd` node holds the functionally to submit the work request to `Master` nodes and also consumed the result 
+of the requested work which is performed by `Master` and `Worker` nodes. 
 
 The above demo can perform one type of work. If we need to perform series of different types of work one after 
-another than we simply need multiple copy of the above module and wire them together. TCS tries to provide that
+another then we simply need multiple copy of the above module and wire them together. TCS tries to provide that
 cascading functionality out of the box. 
  
 
-TCS is a simple API using cluster singleton (e.g. Cluston) with following characteristics
+TCS is a simple API using cluster singleton (e.g. Cluston) with following characteristics:
 
 1. TCS have one Cluston with persistent actor and Worker actors but no Work Executor, 
     so you have the option to write your own custom Work Executor 
