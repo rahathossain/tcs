@@ -5,7 +5,7 @@ import java.util.concurrent.CountDownLatch
 
 import akka.actor.ActorSystem
 import akka.persistence.cassandra.testkit.CassandraLauncher
-import cluster.tcs.Tcs
+import cluster.tcs.TCS
 import com.typesafe.config.{Config, ConfigFactory}
 
 object Main {
@@ -44,7 +44,18 @@ object Main {
   def startClusterInSameJvm(): Unit = {
     startCassandraDatabase()
 
-    val tcs2 = new Tcs(3010, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2, () => WorkExecutor2.props )
+
+    val tcs1 = new TCS(3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1, () => WorkExecutor1.props )
+    // two backend nodes
+    tcs1.startCS(2551)
+    tcs1.startCS(2552)
+    tcs1.startCS(2553)
+    tcs1.startCS(2554)
+    // two front-end nodes
+
+    tcs1.startFrontEnd(FrontEnd.props)
+
+    val tcs2 = new TCS(3010, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2, () => WorkExecutor2.props )
     // two backend nodes
     tcs2.startCS(2561)
     tcs2.startCS(2562)
@@ -59,13 +70,7 @@ object Main {
     tcs2.startWorker(5012, 2)
 
 
-    val tcs1 = new Tcs(3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1, () => WorkExecutor1.props )
-    // two backend nodes
-    tcs1.startCS(2551)
-    tcs1.startCS(2552)
-    // two front-end nodes
 
-    tcs1.startFrontEnd(FrontEnd.props)
 
     tcs1.pipeTo(transform1, tcs2)
 

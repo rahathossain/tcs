@@ -50,7 +50,6 @@ class Worker(masterProxy: ActorRef, workExecutorProps: WorkExecutorProtocol.Work
       currentWorkId = Some(workId)
       workExecutor ! WorkExecutorProtocol.DoWork(job)
       context.become(working)
-
   }
 
   def working: Receive = {
