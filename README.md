@@ -1,7 +1,47 @@
 Team of Cluster Singleton
 =========================
 
-# What is cluster singleton ?
+# What is Team of Cluster Singleton or TCS?
+
+TCS is reusable, resilient/fault tolerant, highly available and durable software component 
+to design special micro-services based cluster solution.
+
+A TCS is clustered group of micro-services, capable of performing some type of custom work in parallel 
+using its worker nodes while also able to manage these works using its master node, and also provide options 
+to communicate to other TCS and external clients via helper nodes.
+
+### TCS Master node: only one active master node 
+The active master node of TCS, is the coordinator of all works perform the TCS. As an example: with the help of 
+the active master node, we can make sure that, a single work gets done only once. 
+By design there is only one active master node at any single point of time in a running cluster.  
+However, design also ensures that the active master node is not the single point of failure, by providing 
+the options to run at multiple instances of any TCS which would introduce some standby master nodes. 
+On failure of active master node, a stand-by master node can take over its place automatically.
+
+### TCS - under the hood 
+Under the hood, TCS is actor based AKKA clustered module backed by apache Cassandra cluster, 
+and the master node follows AKKA cluster singleton pattern which ensures only one active node tagged 
+with same role name in a cluster. In the core of the master node there is persistent actor, which persist 
+all work events on Cassandra cluster and stand-by mode and stand-by master node can recover based on replying 
+the event or saved snapshot using Event sourcing model. 
+
+A TCS communicate with other TCS via pub sub model. Each TCS has two topics: input Topic and result topic. 
+Idea is simple, a TCS perform any work whichever it finds in its input topic and finally put the result in 
+its result topic. When we connect multiple TCS, then the connector just copy the result from result topic of 
+one TCS and put that to input Topic of another TCS. Note that, when any TCS got any work onto its input topic, 
+the active master node only accepts the valid work which are not done yet based on work id, 
+to prevent duplicate work. Worker nodes registered themselves with the master node, so that 
+master node can assign work. Depends on the load of work, we can create more workers for that TCS, so that 
+work can be done in parallel.
+
+### TCS conclusion 
+Finally we can say, team of cluster singleton or TCS is a cluster of distributed actors 
+around the cluster singleton actor, which may perform a specific type of work. 
+TCS can be highly available, resilient, elastic and distributed. Note that, cluster singleton alone can't 
+do the complete unit of work in parallel, it require worker and helpers actors, that's why the we need a team, 
+which we call team of cluster singleton.    
+
+### What is cluster singleton ?
 
 Cluster Singleton manages one singleton actor instance among all cluster nodes or 
 a group of nodes tagged with a specific role.
@@ -9,27 +49,7 @@ In akka, the cluster singleton is a pattern, implemented by `akka.cluster.single
 
 <https://doc.akka.io/docs/akka/2.5/cluster-singleton.html>
 
-# What is Team of Cluster Singleton or TCS?
-
-Team of cluster singleton or TCS is a cluster of distributed actors around the cluster singleton actor, which may 
-perform a specific type of work. TCS can be highly available, resilient, elastic and distributed. Note that, 
-cluster singleton alone can't do the complete unit of work, it require worker and helpers actors, that's why the we 
-need a team, which we call team of cluster singleton.    
-
-Inspiration of TCS came from lightbend demo project, 
-<https://developer.lightbend.com/guides/akka-distributed-workers-scala/>
-
-The above demo shows, how to create cluster singleton `Master` nodes, where only one `Master` node
-is active in a cluster and rest of the `Master` nodes are standby. All the `Worker` nodes in the 
-cluster register themselves with `Master` node. `Master` node assign work to registered `Worker` nodes. 
-However, `Worker` nodes are actually middle manager, they spawn `WorkExecutor` actors which does the actual work. 
-`FrontEnd` node holds the functionally to submit the work request to `Master` nodes and also consumed the result 
-of the requested work which is performed by `Master` and `Worker` nodes. 
-
-The above demo can perform one type of work. If we need to perform series of different types of work one after 
-another then we simply need multiple copy of the above module and wire them together. TCS tries to provide that
-cascading functionality out of the box. 
- 
+# TCS API 
 
 TCS is a simple API using cluster singleton (e.g. Cluston) with following characteristics:
 
@@ -111,5 +131,20 @@ def startWorker(port: Int, workers: Int)
      where `transform` is `Any => Any` and `condition` is `Any => Boolean`
    
   
+# Inspiration of TCS 
+Inspiration of TCS came from lightbend demo project, 
+<https://developer.lightbend.com/guides/akka-distributed-workers-scala/>
+
+ The above demo shows, how to create cluster singleton `Master` nodes, where only one `Master` node
+ is active in a cluster and rest of the `Master` nodes are standby. All the `Worker` nodes in the 
+ cluster register themselves with `Master` node. `Master` node assign work to registered `Worker` nodes. 
+ However, `Worker` nodes are actually middle manager, they spawn `WorkExecutor` actors which does the actual work. 
+ `FrontEnd` node holds the functionally to submit the work request to `Master` nodes and also consumed the result 
+ of the requested work which is performed by `Master` and `Worker` nodes. 
+ 
+ The above demo can perform one type of work. If we need to perform series of different types of work one after 
+ another then we simply need multiple copy of the above module and wire them together. TCS tries to provide that
+ cascading functionality out of the box. 
+ 
 # TODO
 * At the moment there's no timeout options for TCS worker.  
