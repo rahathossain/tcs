@@ -1,12 +1,9 @@
 package cluster.client
 
 import java.io.File
-import java.util.concurrent.CountDownLatch
 
-import akka.actor.ActorSystem
 import akka.persistence.cassandra.testkit.CassandraLauncher
 import cluster.tcs.TCS
-import com.typesafe.config.{Config, ConfigFactory}
 
 object Main {
 
@@ -39,69 +36,30 @@ object Main {
   }
 
 
-
-
   def startClusterInSameJvm(): Unit = {
     startCassandraDatabase()
 
 
-    val tcs1 = new TCS(3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1, () => WorkExecutor1.props )
-    // two backend nodes
-    tcs1.startCS(2551)
-    tcs1.startCS(2552)
-    tcs1.startCS(2553)
-    tcs1.startCS(2554)
-    // two front-end nodes
 
-    tcs1.startFrontEnd(FrontEnd.props)
+    val tcs1 = new TCS(3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1, () => WorkExecutor1.props )
+    (2551 to 2554).map(tcs1.startMaster(_))
+    (5001 to 5002).map(tcs1.startWorker(_, 2))
+    tcs1.startFrontEnd(WorkFinder1.props)
 
     val tcs2 = new TCS(3010, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2, () => WorkExecutor2.props )
-    // two backend nodes
-    tcs2.startCS(2561)
-    tcs2.startCS(2562)
-
-
+    (2561 to 2562).map(tcs2.startMaster(_))
+    (5011 to 5012).map(tcs2.startWorker(_, 2))
     tcs2.startResultConsumer(WorkResultConsumer.props)
-
     //tcs2.startFrontEnd()
 
-    // two worker nodes with two worker actors each
-    tcs2.startWorker(5011, 2)
-    tcs2.startWorker(5012, 2)
-
-
-
-
     tcs1.pipeTo(transform1, tcs2)
-
     tcs1  --> (transform1, tcs2)
-
-    tcs1 --> (transform1, tcs2)
-
-    // two worker nodes with two worker actors each
-    tcs1.startWorker(5001, 2 )
-    tcs1.startWorker(5002, 2)
-
+    tcs1  --> (transform1, tcs2)
   }
 
-  /**
-   * Start a node with the role backend on the given port. (This may also
-   * start the shared journal, see below for details)
-   */
 
 
-  /**
-   * Start a worker node, with n actual workers that will accept and process workloads
-   */
-  // #worker
-  //def startWorker(port: Int, workers: Int): Unit = cluster.tcs.Tcs.startWorker(port, workers, () => WorkExecutor1.props)
-  // #worker
 
-  def config(port: Int, role: String): Config =
-    ConfigFactory.parseString(s"""
-      akka.remote.netty.tcp.port=$port
-      akka.cluster.roles=[$role]
-    """).withFallback(ConfigFactory.load())
 
   /**
    * To make the sample easier to run we kickstart a Cassandra instance to

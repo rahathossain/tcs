@@ -1,9 +1,7 @@
 package cluster.client
 
 import java.util.concurrent.ThreadLocalRandom
-
 import akka.actor.{Actor, Props}
-
 import scala.concurrent.duration._
 
 /**
@@ -14,7 +12,7 @@ object WorkExecutor1 {
 }
 
 class WorkExecutor1 extends Actor {
-  import cluster.tcs.WorkExecutorProtocol._
+  import cluster.tcs.WorkExecutorProtocol.{DoWork, WorkComplete}
   import context.dispatcher
 
   def receive = {
@@ -34,7 +32,7 @@ object WorkExecutor2 {
 }
 
 class WorkExecutor2 extends Actor {
-  import cluster.tcs.WorkExecutorProtocol._
+  import cluster.tcs.WorkExecutorProtocol.{DoWork, WorkComplete}
   import context.dispatcher
 
   def receive = {

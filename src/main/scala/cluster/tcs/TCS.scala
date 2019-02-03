@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 object TCS {
 
   // #singleton
-  def startSingleton(system: ActorSystem, name: String, role: String, in: String , out: String) = {
+  private def startSingleton(system: ActorSystem, name: String, role: String, in: String , out: String) = {
     val workTimeout = system.settings.config.getDuration("distributed-workers.work-timeout").getSeconds.seconds
 
     system.actorOf(
@@ -23,24 +23,10 @@ object TCS {
   // #singleton
 
 
-  /**
-    * Start a node with the role backend on the given port. (This may also
-    * start the shared journal, see below for details)
-    */
-  def startCS(port: Int, singletonName: String, singletonRole: String, inTopic: String ,resultTopic: String): Unit = {
-    val system = ActorSystem("ClusterSystem", config(port, singletonRole))
-    startSingleton(system, singletonName, singletonRole, inTopic, resultTopic)
-  }
-
-
-  /**
-    * Start a worker node, with n actual workers that will accept and process workloads
-    */
   // #worker
-  def startWorker(port: Int, workers: Int,
+  private def startWorkerNode(system: ActorSystem, workers: Int,
                   singletonName: String, singletonRole: String,
                   workExecutorProps: WorkExecutorProtocol.WorkExecutorProps): Unit = {
-    val system = ActorSystem("ClusterSystem", config(port, "worker"))
 
     val masterProxy = system.actorOf(
           proxyProps(system, singletonName, singletonRole), name = "masterProxy")
@@ -52,13 +38,13 @@ object TCS {
   // #worker
 
   // #proxy
-  def proxyProps(system: ActorSystem, singletonName: String, singletonRole: String) =
+  private def proxyProps(system: ActorSystem, singletonName: String, singletonRole: String) =
     ClusterSingletonProxy.props(
       settings = ClusterSingletonProxySettings(system).withRole(singletonRole),
       singletonManagerPath = s"/user/$singletonName")
   // #proxy
 
-  def config(port: Int, role: String): Config =
+  private def config(port: Int, role: String): Config =
     ConfigFactory.parseString(s"""
       akka.remote.netty.tcp.port=$port
       akka.cluster.roles=[$role]
@@ -71,25 +57,52 @@ class TCS(port: Int, singletonName: String, singletonRole: String, val inTopic: 
 
   import TCS._
 
+
+  /** ActorSystem --> ClusterSystem
+    * #singletonRole
+    *
+    * Start a node with the role backend on the given port. (This may also
+    * start the shared journal, see below for details)
+    */
+  def startMaster(port: Int) = {
+    val system = ActorSystem("ClusterSystem", config(port, singletonRole))
+    startSingleton(system, singletonName, singletonRole, inTopic, resultTopic)
+  }
+
+  /** ActorSystem --> ClusterSystem
+    * #worker
+    *
+    * Start a worker node, with n actual workers that will accept and process workloads
+    */
+  def startWorker(port: Int, workers: Int) = {
+    val system = ActorSystem("ClusterSystem", config(port, "worker"))
+    startWorkerNode(system, workers, singletonName, singletonRole, workExecutorProps)
+  }
+
+
+
+  /** ActorSystem --> ClusterSystem
+    * #front-end
+    *
+    * all the below actors will be created under front-end node.
+    */
   val system = ActorSystem("ClusterSystem", config(port, "front-end"))
 
-  def startCS(port: Int) = TCS.startCS(port, singletonName, singletonRole, inTopic, resultTopic)
-  def startWorker(port: Int, workers: Int) =
-            TCS.startWorker(port, workers, singletonName, singletonRole, workExecutorProps)
+  def startFrontEnd(workFinderProps: Props) =
+    system.actorOf(FrontEnd.props(proxyProps(system, singletonName, singletonRole), workFinderProps), "front-end")
 
 
+  def startResultConsumer(props: (String) => Props) =
+    system.actorOf(props(resultTopic), "consumer")
 
-  /**
-    * Start a front end node that will submit work to the backend nodes
+
+  /*** Pipe To
+    *
+    * @param transform
+    * @param fromTopic
+    * @param toTopic
+    * @return
     */
-  def startFrontEnd(frontEndProps:  (Props) => Props ) =
-          system.actorOf(frontEndProps(proxyProps), "front-end")
-
-  def proxyProps = TCS.proxyProps(system, singletonName, singletonRole)
-
-  def startResultConsumer(props: (String) => Props) = system.actorOf(props(resultTopic), "consumer")
-
-
   private def pipeTo(transform: Any => Any, fromTopic: String, toTopic: String): ActorRef =
       system.actorOf(WorkResultTransfer.props(transform, fromTopic, toTopic) )
 
@@ -103,12 +116,30 @@ class TCS(port: Int, singletonName: String, singletonRole: String, val inTopic: 
   def <-- (otherTcs: TCS): ActorRef = pipeTo((_: Any)=>_, otherTcs.resultTopic, inTopic)
   def <-- (transform: Any => Any, otherTcs: TCS): ActorRef = pipeTo(transform, otherTcs.resultTopic, inTopic)
 
+  /*** Spray To - Splitter
+    *
+    * @param transform
+    * @param fromTopic
+    * @param toTopic
+    * @return
+    */
+
   private def sprayTo(transform: Any => Any, fromTopic: String, toTopic: String): ActorRef =
     system.actorOf(WorkResultSplitter.props(transform, fromTopic, toTopic) )
 
   def sprayTo(otherTcs: TCS): ActorRef = sprayTo((_: Any)=>_ , resultTopic, otherTcs.inTopic)
   def sprayTo(transform: Any => Any, otherTcs: TCS): ActorRef = sprayTo(transform, resultTopic, otherTcs.inTopic)
 
+
+  /*** Router To - router
+    *
+    * @param transform
+    * @param condition
+    * @param fromTopic
+    * @param eitherTopic
+    * @param orTopic
+    * @return
+    */
   private def routeTo(transform: Any => Any, condition: Any => Boolean, fromTopic: String,
                       eitherTopic: String, orTopic: String): ActorRef =
     system.actorOf(WorkResultRouter.props(transform, condition, fromTopic, eitherTopic, orTopic) )
