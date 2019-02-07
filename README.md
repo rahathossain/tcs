@@ -147,4 +147,106 @@ Inspiration of TCS came from lightbend demo project,
  cascading functionality out of the box. 
  
 # TODO
-* At the moment there's no timeout options for TCS worker.  
+* At the moment there's no timeout options for TCS worker.
+* TTL Setting for persistent Journal  
+
+## TTL Setting [TODO] 
+Cleanup of tag_views table
+By default the tag_views table keeps tagged events indefinitely, even when the original events have been removed. 
+Depending on the volume of events this may not be suitable for production.
+
+Before going live decide a time to live (TTL) and, if small enough, consider using the Time Window Compaction Strategy. 
+See `events-by-tag.time-to-live` in reference.conf for how to set this.
+
+## Pub Sub model issue [TODO] 
+Message can get lost in DistributedPubSubMediator. 
+add custom Transporter along with or other than DistributedPubSubMediator or use Kafka Topic  
+
+There maybe two ways:
+
+*First way is:* 
+    Use the same retry technique as Front End. 
+    Front End is Producer and Master is consumer in this case. 
+    Front End (Producer in this case) sends a work messages to Master and wait for ACK for certain time
+    and if no ACK received then it resend the work message. 
+    Master (consumer in this case) discard any duplicate work message but provide ACK for each work message received from Front End. 
+
+Same way, Master (Producer in the new case) need to send Response message to ResultConsumer with timeout value and resend if no ACK received within time frame and ResultConsumer need to discard duplicate but response with ACK for the work request received. 
+  
+*Second Way:*
+Kafka  
+
+
+## Delay Configs  
+
+
+### FrontEnd Delay configs [TODO]
+* initialDelay = 5
+* nextTickLowerLimit = 3
+* nextTickUpperLimit = 10 
+* retryTimeout = 5
+* sendWorkTimout = 5
+```conf
+
+front-end {    
+        initial-delay-for {
+            any = 5
+            tcs1 = 5
+        }
+        next-tick-lower-limit-for {
+            any = 3
+            tcs1 = 3
+        }
+        next-tick-upper-limit-for {
+            any = 10
+            tcs1 = 10
+        }
+        retry-timeout-for {
+            any = 5
+            tcs1 = 5
+        }
+        send-work-timout-for {
+            any = 3
+            tcs1 = 3
+        }        
+        
+}
+
+```
+
+### Master Delay configs [TODO]
+* distributed-workers.consider-worker-dead-after = inside `application.conf` file 
+* front-end.missed-work-checking-interval = 60 [TODO]  
+
+### Worker Delay configs [TODO]
+* distributed-workers.worker-registration-interval = inside `application.conf` file
+* workIsDoneNotificationToMasterTimeout = 5 (currently hard coded inside Worker)
+* distributed-workers.worker-master-ack-timeout = 5 [TODO]   
+
+### config files
+Delay configs inside `application.conf` file 
+ 
+```conf
+# Configuration related to the app is in its own namespace
+
+distributed-workers {
+
+  # Each worker pings the master with this interval
+  # to let it know that it is alive
+  worker-registration-interval = 10s
+  
+  # If a worker hasn't gotten in touch in this long
+  # it is removed from the set of workers
+  consider-worker-dead-after = 60s
+
+  # If a workload hasn't finished in this long it
+  # is considered failed and is retried
+  work-timeout = 10s
+}
+``` 
+
+## Other TCS Configs
+
+
+
+
