@@ -17,6 +17,12 @@ class WorkResultTransfer(transform: Any => Any, subscribeTo: String, publishTo: 
 
   def receive = {
     case _: DistributedPubSubMediator.SubscribeAck =>
+    case WorkResult(workId, result: List[Any]) =>
+      log.info("Splitting result: {}, from {} to {} ", result, subscribeTo, publishTo)
+
+      result.map ( r =>
+        mediator ! DistributedPubSubMediator.Publish(publishTo, Work( workId, transform(r)) )
+      )
     case WorkResult(workId, result) =>
       log.info("Transferring result: {}, from {} to {} ", result, subscribeTo, publishTo)
 

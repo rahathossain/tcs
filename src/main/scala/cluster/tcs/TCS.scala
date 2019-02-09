@@ -116,20 +116,6 @@ class TCS(port: Int, singletonName: String, singletonRole: String, val inTopic: 
   def <-- (otherTcs: TCS): ActorRef = pipeTo((_: Any)=>_, otherTcs.resultTopic, inTopic)
   def <-- (transform: Any => Any, otherTcs: TCS): ActorRef = pipeTo(transform, otherTcs.resultTopic, inTopic)
 
-  /*** Spray To - Splitter
-    *
-    * @param transform
-    * @param fromTopic
-    * @param toTopic
-    * @return
-    */
-
-  private def sprayTo(transform: Any => Any, fromTopic: String, toTopic: String): ActorRef =
-    system.actorOf(WorkResultSplitter.props(transform, fromTopic, toTopic) )
-
-  def sprayTo(otherTcs: TCS): ActorRef = sprayTo((_: Any)=>_ , resultTopic, otherTcs.inTopic)
-  def sprayTo(transform: Any => Any, otherTcs: TCS): ActorRef = sprayTo(transform, resultTopic, otherTcs.inTopic)
-
 
   /*** Router To - router
     *
