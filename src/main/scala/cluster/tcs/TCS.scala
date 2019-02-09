@@ -88,8 +88,8 @@ class TCS(port: Int, singletonName: String, singletonRole: String, val inTopic: 
     */
   val system = ActorSystem("ClusterSystem", config(port, "front-end"))
 
-  def startFrontEnd(workFinderProps: Props) =
-    system.actorOf(FrontEnd.props(proxyProps(system, singletonName, singletonRole), workFinderProps), "front-end")
+  def startFrontEnd(frontEndProps:  (Props) => Props ) =
+    system.actorOf(frontEndProps(proxyProps(system, singletonName, singletonRole)), "front-end")
 
 
   def startResultConsumer(props: (String) => Props) =

@@ -44,7 +44,7 @@ object Main {
     val tcs1 = new TCS(3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1, () => WorkExecutor1.props )
     (2551 to 2554).map(tcs1.startMaster(_))
     (5001 to 5002).map(tcs1.startWorker(_, 2))
-    tcs1.startFrontEnd(WorkFinder1.props)
+    tcs1.startFrontEnd(FrontEnd.props)
 
     val tcs2 = new TCS(3010, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2, () => WorkExecutor2.props )
     (2561 to 2562).map(tcs2.startMaster(_))

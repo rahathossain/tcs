@@ -1,20 +1,22 @@
-package cluster.tcs
+package cluster.client
 
 import java.util.UUID
 import java.util.concurrent.ThreadLocalRandom
 
-import akka.actor.{Actor, ActorLogging, Props, Timers}
+import akka.actor.{Actor, ActorLogging, Cancellable, Props, Timers}
 import akka.pattern._
 import akka.util.Timeout
 
 import scala.concurrent.duration._
+
+import cluster.tcs._
 
 /**
  * Dummy front-end that periodically sends a workload to the master.
  */
 object FrontEnd {
 
-  def props(proxyProps: Props, workFinderProps: Props): Props = Props(new FrontEnd(proxyProps, workFinderProps))
+  def props(proxyProps: Props): Props = Props(new FrontEnd(proxyProps))
 
   private case object NotOk
   private case object Tick
@@ -22,17 +24,15 @@ object FrontEnd {
 }
 
 // #front-end
-class FrontEnd(proxyProps: Props, workFinderProps: Props) extends Actor with ActorLogging with Timers {
+class FrontEnd(proxyProps: Props) extends Actor with ActorLogging with Timers {
   import FrontEnd._
   import context.dispatcher
-  import JobSeekerProtocol._
 
   val masterProxy = context.actorOf(proxyProps, name = "masterProxy" )
-  val workFinderActor = context.actorOf(workFinderProps, name="workFinder")
 
   var workCounter = 0
 
-  //def nextWorkId(): String = UUID.randomUUID().toString
+  def nextWorkId(): String = UUID.randomUUID().toString
 
   override def preStart(): Unit = {
     timers.startSingleTimer("tick", Tick, 5.seconds)
@@ -42,15 +42,10 @@ class FrontEnd(proxyProps: Props, workFinderProps: Props) extends Actor with Act
 
   def idle: Receive = {
     case Tick =>
-      log.info("Seeking work ....")
-      workFinderActor ! Seek
-
-    case JobFound(workId: String) =>
-      log.info("Produced work: {}", workCounter)
       workCounter += 1
-      val work = Work(workId, workCounter)
+      log.info("Produced work: {}", workCounter)
+      val work = Work(nextWorkId(), workCounter)
       context.become(busy(work))
-
   }
 
   def busy(workInProgress: Work): Receive = {
