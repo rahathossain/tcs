@@ -62,7 +62,7 @@ TCS is a simple API using cluster singleton (e.g. Cluston) with following charac
 6. TCS expect number of Worker count e.g. `workerCount` 
 7. One TCS can forward it's results to another TCS by piping it's `resultsTopic` to other's `inTopic` by using
    `pipeTo` function. TCS also have `routeTo` function to perform routing results between two TCSs  
-   and `pipeTo` function can be used as a splitter, when output is  `List[Any]`  
+   and also `sprayTo` function which is just work as a splitter.  
        
 
 # Parameters for TCS
@@ -121,9 +121,9 @@ def startWorker(port: Int, workers: Int)
      payload from `tcs1` to `tcs2`. To transform payload while copying use 
      `tcs1 --> (transform, tcs2) ` where `transform` is Any => Any     
       
-  - pipeTo, can be a splitter. If we have `List[Any]` as `tcs1.resultsTopic`
+  - sprayTo, is basically splitter. This can be used if we have `List[Any]` as `tcs1.resultsTopic`
     and we want extract the values out of the list and put onto `tcs2.inTopic` one by one. function can be
-    called as `tcs1 pipeTo tcs2`  or along with transform `tcs1 pipeTo (transform, tcs2)`
+    called as `tcs1 sprayTo tcs2`  or along with transform `tcs1 sprayTo (transform, tcs2)`
     
   - routeTo, provide an option to send result payload of `tcs1` to either `tcs2` or `tcs3` based on supplied 
      condition i.e. `routeTo(condition, tcs2, tcs3)` , like above functions, this is also an overloaded 

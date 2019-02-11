@@ -4,25 +4,28 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator
 
-object WorkResultTransfer {
+object WorkResultSplitter {
   def props(transform: Any => Any, subscribeTo: String, publishTo: String): Props =
-    Props(new WorkResultTransfer(transform, subscribeTo, publishTo))
+    Props(new WorkResultSplitter(transform, subscribeTo, publishTo))
 }
 
 // #work-result-consumer
-class WorkResultTransfer(transform: Any => Any, subscribeTo: String, publishTo: String) extends Actor with ActorLogging {
+class WorkResultSplitter(transform: Any => Any, subscribeTo: String, publishTo: String) extends Actor with ActorLogging {
 
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! DistributedPubSubMediator.Subscribe(subscribeTo, self)
 
   def receive = {
     case _: DistributedPubSubMediator.SubscribeAck =>
-    case WorkResult(workId, result) =>
-      log.info("Transferring result: {}, from {} to {} ", result, subscribeTo, publishTo)
+    case WorkResult(workId, result: List[Any]) =>
+      log.info("Splitting result: {}, from {} to {} ", result, subscribeTo, publishTo)
 
-    mediator ! DistributedPubSubMediator.Publish(publishTo, Work( workId, transform(result)) )
+      result.map ( r =>
+        mediator ! DistributedPubSubMediator.Publish(publishTo, Work( workId, transform(r)) )
+      )
   }
 
 }
+
 
 
