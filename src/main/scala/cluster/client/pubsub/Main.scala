@@ -1,13 +1,13 @@
-package cluster.client
+package cluster.client.pubsub
 
 import java.io.File
 
 import akka.persistence.cassandra.testkit.CassandraLauncher
-import cluster.tcs.TCS
+import cluster.tcs.pubsub.TCS
 
 object Main {
 
-  import AppConfig._
+  import cluster.client.pubsub.AppConfig._
 
 
 

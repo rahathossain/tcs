@@ -1,11 +1,7 @@
-package cluster.tcs
-
-
-
+package cluster.tcs.pubsub
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
 object WorkResultRouter {
   def props(transform: Any => Any, routeCondition: Any => Boolean, subscribeTo: String,

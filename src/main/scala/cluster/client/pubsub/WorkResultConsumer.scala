@@ -1,8 +1,8 @@
-package cluster.client
+package cluster.client.pubsub
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import cluster.tcs.pubsub.WorkResult
 
 
 
@@ -13,8 +13,6 @@ object WorkResultConsumer {
 
 // #work-result-consumer
 class WorkResultConsumer(subscribeTo: String) extends Actor with ActorLogging {
-
-  import cluster.tcs.{WorkResult}
 
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! DistributedPubSubMediator.Subscribe(subscribeTo, self)

@@ -1,9 +1,9 @@
-package cluster.tcs
+package cluster.tcs.pubsub
 
-import akka.actor.{ActorLogging, ActorRef, Cancellable, Props, Timers}
+import akka.actor.{ActorLogging, ActorRef, Props, Timers}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
-
+import cluster.tcs._
 
 import scala.concurrent.duration.{Deadline, FiniteDuration, _}
 
@@ -30,7 +30,6 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
                           extends Timers with PersistentActor with ActorLogging {
   import Master._
   import WorkState._
-  import context.dispatcher
 
   override val persistenceId: String = id
 

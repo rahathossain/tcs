@@ -1,15 +1,15 @@
-package cluster.client
+package cluster.client.pubsub
 
 import java.util.UUID
 import java.util.concurrent.ThreadLocalRandom
 
-import akka.actor.{Actor, ActorLogging, Cancellable, Props, Timers}
+import akka.actor.{Actor, ActorLogging, Props, Timers}
 import akka.pattern._
 import akka.util.Timeout
 
 import scala.concurrent.duration._
 
-import cluster.tcs._
+import cluster.tcs.pubsub._
 
 /**
  * Dummy front-end that periodically sends a workload to the master.

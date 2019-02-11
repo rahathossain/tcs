@@ -1,4 +1,4 @@
-package cluster.client
+package cluster.client.pubsub
 
 object AppConfig {
 

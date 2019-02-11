@@ -1,10 +1,9 @@
-package cluster.tcs
+package cluster.tcs.pubsub
 
 import java.util.UUID
 
 import akka.actor.SupervisorStrategy.{Restart, Stop}
 import akka.actor._
-
 
 import scala.concurrent.duration._
 

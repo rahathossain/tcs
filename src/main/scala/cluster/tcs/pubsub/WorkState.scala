@@ -1,4 +1,4 @@
-package cluster.tcs
+package cluster.tcs.pubsub
 
 import scala.collection.immutable.Queue
 
