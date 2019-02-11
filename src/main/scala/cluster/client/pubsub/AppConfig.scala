@@ -8,13 +8,13 @@ object AppConfig {
 
   val frontEndPortRange = 3000 to 3999
 
-  val singletonName1 = "master1"
-  val singletonRole1 = "back-end1"
+  val singletonName1 = "pub-sub-master1"
+  val singletonRole1 = "pub-sub-back-end1"
   val inTopic1 = "inTopic1"
   val ResultsTopic1 = "outTopic1"
 
-  val singletonName2 = "master2"
-  val singletonRole2 = "back-end2"
+  val singletonName2 = "pub-sub-master2"
+  val singletonRole2 = "pub-sub-back-end2"
   val inTopic2 = "inTopic2"
   val ResultsTopic2 = "outTopic2"
 }
