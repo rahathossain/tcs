@@ -41,38 +41,35 @@ object Main {
     startCassandraDatabase()
 
 
-    val tcs1 = new TCS(3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1, () => WorkExecutor1.props )
-    val trep1 = () => TransportExecutor1.props(tcs1.masterProxyProps(singletonName2, singletonRole2))
-    startMasterWorkerTransporter(tcs1, masterPorts=2551 to 2554, workPorts=5001 to 5002, count=2,trep1 )
+    val tcs1 = new TCS(port=3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1 )
+
+    startMasterWorkerTransporter(tcs1,
+      masterPorts=2551 to 2554, workPorts=5001 to 5002, count=2,
+      () => WorkExecutor1.props,
+      () => TransportExecutor1.props(tcs1.masterProxyProps(singletonName2, singletonRole2)) )
 
     tcs1.startFrontEnd(FrontEnd.props)
 
     //TransportExecutor2
 
-
-    val tcs2 = new TCS(3010, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2, () => WorkExecutor2.props )
-    val trep2 = () => TransportExecutor2.props
-    startMasterWorkerTransporter(tcs2, masterPorts=2561 to 2562, workPorts=5011 to 5012, count=2, trep2 )
-
+    val tcs2 = new TCS(3010, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2 )
+    startMasterWorkerTransporter(tcs2,
+      masterPorts=2561 to 2562, workPorts=5011 to 5012, count=2,
+      () => WorkExecutor2.props,
+      () => TransportExecutor2.props )
 
     //tcs2.startResultConsumer(WorkResultConsumer.props)
     //tcs2.startFrontEnd()
 
-
-
-
-    //tcs1.pipeTo(transform1, tcs2)
-    //tcs1  --> (transform1, tcs2)
-    //tcs1  --> (transform1, tcs2)
   }
 
 
   def startMasterWorkerTransporter(tcs: TCS, masterPorts: Range, workPorts: Range, count: Int,
-                                   trep: () => Props) = {
+                                   workerExec: () => Props , transExec: () => Props) = {
 
     masterPorts.map(tcs.startMaster( _ ) )
 
-    workPorts.map( tcs.startWorkerTransporter(_, count, trep) )
+    workPorts.map( tcs.startWorkerTransporter(_, count, workerExec, transExec) )
 
   }
 

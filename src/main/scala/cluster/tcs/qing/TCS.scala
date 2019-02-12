@@ -68,8 +68,7 @@ object TCS {
 }
 
 class TCS(port: Int, singletonName: String, singletonRole: String,
-          val inTopic: String, val resultTopic: String,
-          workExecutorProps: WorkExecutorProtocol.WorkExecutorProps ) {
+          val inTopic: String, val resultTopic: String ) {
 
   import TCS._
 
@@ -90,19 +89,21 @@ class TCS(port: Int, singletonName: String, singletonRole: String,
     *
     * Start a worker node, with n actual workers that will accept and process workloads
     */
-  def startWorker(port: Int, workers: Int) = {
+  def startWorker(port: Int, workers: Int,
+                  workExecutorProps: WorkExecutorProtocol.WorkExecutorProps) = {
     val system = ActorSystem("ClusterSystem", config(port, "worker"))
     startWorkerNode(system, workers, singletonName, singletonRole, workExecutorProps)
+    system
   }
 
   def startWorkerTransporter(port: Int, count: Int,
+                             workExecutorProps: WorkExecutorProtocol.WorkExecutorProps,
                              transportExecutorProps: TransportExecutorProtocol.TransportExecutorProps) = {
-    val system = ActorSystem("ClusterSystem", config(port, "worker"))
-    startWorkerNode(system, count, singletonName, singletonRole, workExecutorProps)
+    val system = startWorker(port, count, workExecutorProps)
     startTransporterNode(system, count, singletonName, singletonRole, transportExecutorProps)
   }
 
-  def startTransporter(transporters: Int,
+  def startTransporter(system: ActorSystem, transporters: Int,
                        transportExecutorProps: TransportExecutorProtocol.TransportExecutorProps): Unit = {
     startTransporterNode(system, transporters, singletonName, singletonRole, transportExecutorProps)
 
