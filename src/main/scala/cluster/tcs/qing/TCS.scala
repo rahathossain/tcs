@@ -125,45 +125,4 @@ class TCS(port: Int, singletonName: String, singletonRole: String,
   def startResultConsumer(props: (String) => Props) =
     system.actorOf(props(resultTopic), "consumer")
 
-
-  /*** Pipe To
-    *
-    * @param transform
-    * @param fromTopic
-    * @param toTopic
-    * @return
-    */
-  private def pipeTo(transform: Any => Any, fromTopic: String, toTopic: String): ActorRef =
-      system.actorOf(WorkResultTransfer.props(transform, fromTopic, toTopic) )
-
-  def pipeTo(otherTcs: TCS): ActorRef = pipeTo((_: Any)=>_ , resultTopic, otherTcs.inTopic)
-  def pipeTo(transform: Any => Any, otherTcs: TCS): ActorRef = pipeTo(transform, resultTopic, otherTcs.inTopic)
-
-
-  def --> (otherTcs: TCS): ActorRef = pipeTo(otherTcs)
-  def --> (transform: Any => Any, otherTcs: TCS): ActorRef = pipeTo(transform, otherTcs)
-
-  def <-- (otherTcs: TCS): ActorRef = pipeTo((_: Any)=>_, otherTcs.resultTopic, inTopic)
-  def <-- (transform: Any => Any, otherTcs: TCS): ActorRef = pipeTo(transform, otherTcs.resultTopic, inTopic)
-
-
-  /*** Router To - router
-    *
-    * @param transform
-    * @param condition
-    * @param fromTopic
-    * @param eitherTopic
-    * @param orTopic
-    * @return
-    */
-  private def routeTo(transform: Any => Any, condition: Any => Boolean, fromTopic: String,
-                      eitherTopic: String, orTopic: String): ActorRef =
-    system.actorOf(WorkResultRouter.props(transform, condition, fromTopic, eitherTopic, orTopic) )
-
-  def routeTo(condition: Any => Boolean, eitherTcs: TCS, orTcs: TCS): ActorRef =
-    routeTo((_:Any)=>_, condition, this.resultTopic, eitherTcs.inTopic, orTcs.inTopic)
-
-  def routeTo(transform: Any => Any, condition: Any => Boolean, eitherTcs: TCS, orTcs: TCS): ActorRef =
-    routeTo(transform, condition, this.resultTopic, eitherTcs.inTopic, orTcs.inTopic)
-
 }
