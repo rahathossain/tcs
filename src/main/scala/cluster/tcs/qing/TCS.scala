@@ -2,7 +2,6 @@ package cluster.tcs.qing
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings, ClusterSingletonProxy, ClusterSingletonProxySettings}
-import cluster.tcs._
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.duration._
@@ -25,12 +24,9 @@ object TCS {
 
 
   // #worker
-  private def startWorkerNode(system: ActorSystem, workers: Int,
+  private def startWorkerNode(system: ActorSystem, masterProxy: ActorRef, workers: Int,
                   singletonName: String, singletonRole: String,
                   workExecutorProps: WorkExecutorProtocol.WorkExecutorProps): Unit = {
-
-    val masterProxy = system.actorOf(
-          proxyProps(system, singletonName, singletonRole), name = "masterProxy1")
 
     (1 to workers).foreach(n =>
       system.actorOf(Worker.props(masterProxy, workExecutorProps), s"worker-$n")
@@ -39,13 +35,9 @@ object TCS {
   // #worker
 
   // #transporter
-  private def startTransporterNode(system: ActorSystem, transporters: Int,
+  private def startTransporterNode(system: ActorSystem, masterProxy: ActorRef, transporters: Int,
                                    singletonName: String, singletonRole: String,
                                    transportExecutorProps: TransportExecutorProtocol.TransportExecutorProps): Unit = {
-
-    val masterProxy = system.actorOf(
-      proxyProps(system, singletonName, singletonRole), name = "masterProxy2")
-
     (1 to transporters).foreach(n =>
       system.actorOf(Transporter.props(masterProxy, transportExecutorProps), s"transporter-$n")
     )
@@ -67,8 +59,7 @@ object TCS {
 
 }
 
-class TCS(port: Int, singletonName: String, singletonRole: String,
-          val inTopic: String, val resultTopic: String ) {
+class TCS(singletonName: String, singletonRole: String, val inTopic: String, val resultTopic: String ) {
 
   import TCS._
 
@@ -84,46 +75,57 @@ class TCS(port: Int, singletonName: String, singletonRole: String,
     startSingleton(system, singletonName, singletonRole, inTopic, resultTopic)
   }
 
-  /** ActorSystem --> ClusterSystem
-    * #worker
-    *
-    * Start a worker node, with n actual workers that will accept and process workloads
-    */
-  def startWorker(port: Int, workers: Int,
-                  workExecutorProps: WorkExecutorProtocol.WorkExecutorProps) = {
+
+
+  def startWorker(port: Int, workersCount: Int,
+                             workExecutorProps: WorkExecutorProtocol.WorkExecutorProps) = {
     val system = ActorSystem("ClusterSystem", config(port, "worker"))
-    startWorkerNode(system, workers, singletonName, singletonRole, workExecutorProps)
-    system
+    val masterProxy = system.actorOf(proxyProps(system, singletonName, singletonRole), name = "masterProxy")
+    startWorkerNode(system, masterProxy, workersCount, singletonName, singletonRole, workExecutorProps)
+    (system, masterProxy)
   }
 
-  def startWorkerTransporter(port: Int, count: Int,
+
+  def startTransporter(system: ActorSystem, masterProxy: ActorRef, transportersCount: Int,
+                       transportExecutorProps: TransportExecutorProtocol.TransportExecutorProps) = {
+    startTransporterNode(system, masterProxy, transportersCount, singletonName, singletonRole, transportExecutorProps)
+  }
+
+
+  /*
+  def startWorkerTransporter(port: Int, workersCount: Int, transportersCount: Int,
                              workExecutorProps: WorkExecutorProtocol.WorkExecutorProps,
                              transportExecutorProps: TransportExecutorProtocol.TransportExecutorProps) = {
-    val system = startWorker(port, count, workExecutorProps)
-    startTransporterNode(system, count, singletonName, singletonRole, transportExecutorProps)
-  }
+    val system = ActorSystem("ClusterSystem", config(port, "worker"))
+    val masterProxy = system.actorOf(proxyProps(system, singletonName, singletonRole), name = "masterProxy")
 
-  def startTransporter(system: ActorSystem, transporters: Int,
-                       transportExecutorProps: TransportExecutorProtocol.TransportExecutorProps): Unit = {
-    startTransporterNode(system, transporters, singletonName, singletonRole, transportExecutorProps)
+    startWorkerNode(system, masterProxy, workersCount, singletonName, singletonRole, workExecutorProps)
 
+    startTransporterNode(system, masterProxy, transportersCount, singletonName, singletonRole, transportExecutorProps)
+
+    (system, masterProxy)
   }
+  */
 
 
   /** ActorSystem --> ClusterSystem
-    * #front-end
+    * #helper-node
     *
     * all the below actors will be created under front-end node.
     */
-  val system = ActorSystem("ClusterSystem", config(port, "front-end"))
 
-  def masterProxyProps(singletonName: String, singletonRole: String) = proxyProps(system, singletonName, singletonRole)
+  def helperNode(port: Int) = ActorSystem("ClusterSystem", config(port, "helper-node"))
 
-  def startFrontEnd(frontEndProps:  (Props) => Props ) =
+  def masterProxyProps(system: ActorSystem, singletonName: String, singletonRole: String) =
+            proxyProps(system, singletonName, singletonRole)
+
+  def startFrontEnd(system: ActorSystem, frontEndProps:  (Props) => Props ) =
     system.actorOf(frontEndProps(proxyProps(system, singletonName, singletonRole)), "front-end")
 
 
-  def startResultConsumer(props: (String) => Props) =
+  def startResultConsumer(system: ActorSystem, props: (String) => Props) =
     system.actorOf(props(resultTopic), "consumer")
+
+
 
 }
