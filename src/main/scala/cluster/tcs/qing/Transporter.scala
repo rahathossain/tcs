@@ -44,10 +44,11 @@ class Transporter(masterProxy: ActorRef, transportExecutorProps: TransportExecut
       // this is the only state where we reply to TransportIsReady
       masterProxy ! TransporterRequestsTransport(transporterId)
 
-    case Transport(transportId, job: Int) =>
+    case Transport(transportId, job: Any) =>
       log.info("Got transport: {}", job)
       currentTransportId = Some(transportId)
-      transportExecutor ! TransportExecutorProtocol.DoTransport(job)
+      //transportExecutor ! TransportExecutorProtocol.DoTransport(job)
+      transportExecutor ! TransportExecutorProtocol.DoTransfer(transportId, job)
       context.become(transporting)
   }
 
