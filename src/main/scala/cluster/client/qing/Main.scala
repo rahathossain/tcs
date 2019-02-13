@@ -2,7 +2,8 @@ package cluster.client.qing
 
 import java.io.File
 
-import akka.actor.Props
+import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.persistence.cassandra.testkit.CassandraLauncher
 import cluster.tcs.qing.TCS
 
@@ -40,40 +41,36 @@ object Main {
   def startClusterInSameJvm(): Unit = {
     startCassandraDatabase()
 
-
-    val tcs1 = new TCS(port=3000, singletonName1, singletonRole1, inTopic1 ,ResultsTopic1 )
-
-    startMasterWorkerTransporter(tcs1,
-      masterPorts=2551 to 2554, workPorts=5001 to 5002, count=2,
-      () => WorkExecutor1.props,
-      () => TransportExecutor1.props(tcs1.masterProxyProps(singletonName2, singletonRole2)) )
-
-    tcs1.startFrontEnd(FrontEnd.props)
-
-    //TransportExecutor2
-
-    val tcs2 = new TCS(3010, singletonName2, singletonRole2, inTopic2 ,ResultsTopic2 )
-    startMasterWorkerTransporter(tcs2,
-      masterPorts=2561 to 2562, workPorts=5011 to 5012, count=2,
-      () => WorkExecutor2.props,
-      () => TransportExecutor2.props )
+    //TCS2
+    val tcs2 = new TCS(singletonName2, singletonRole2, inTopic2 ,ResultsTopic2 )
+    (2561 to 2562).map( tcs2.startMaster( _ ) )
+    (5011 to 5012).map { p =>
+      val (x, y) = tcs2.startWorker( p , workersCount = 2, () => WorkExecutor2.props)
+      tcs2.startTransporter(x, y, transportersCount = 2, () => TransportExecutor2.props )
+      true
+    }
 
     //tcs2.startResultConsumer(WorkResultConsumer.props)
     //tcs2.startFrontEnd()
 
+
+    // #TCS1
+    val tcs1 = new TCS(singletonName1, singletonRole1, inTopic1 ,ResultsTopic1 )
+
+    (2551 to 2554).map( tcs1.startMaster( _ ) )
+
+    (5001 to 5002).map { p =>
+      val (x, y) = tcs1.startWorker( p , workersCount = 2, () => WorkExecutor1.props)
+      val pm2 = tcs1.masterProxyProps(x, singletonName2, singletonRole2)
+
+      tcs1.startTransporter(x, y, transportersCount = 2,
+        () => TransportExecutor1.props(pm2)
+      )
+      true
+    }
+    tcs1.startFrontEnd(tcs1.helperNode(port=3000), FrontEnd.props)
+
   }
-
-
-  def startMasterWorkerTransporter(tcs: TCS, masterPorts: Range, workPorts: Range, count: Int,
-                                   workerExec: () => Props , transExec: () => Props) = {
-
-    masterPorts.map(tcs.startMaster( _ ) )
-
-    workPorts.map( tcs.startWorkerTransporter(_, count, workerExec, transExec) )
-
-  }
-
-
 
   /**
    * To make the sample easier to run we kickstart a Cassandra instance to
