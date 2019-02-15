@@ -2,8 +2,6 @@ package cluster.client.qing
 
 import java.io.File
 
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.persistence.cassandra.testkit.CassandraLauncher
 import cluster.tcs.qing.TCS
 
