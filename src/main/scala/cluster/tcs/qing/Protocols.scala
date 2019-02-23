@@ -2,9 +2,9 @@ package cluster.tcs.qing
 
 import akka.actor.Props
 
-case class Work(workId: String, job: Any)
+case class Work(workId: String, job: String)
 
-case class WorkResult(workId: String, result: Any)
+case class WorkResult(workId: String, result: String)
 
 
 object MasterWorkerProtocol {
@@ -12,7 +12,7 @@ object MasterWorkerProtocol {
   case class RegisterWorker(workerId: String)
   case class DeRegisterWorker(workerId: String)
   case class WorkerRequestsWork(workerId: String)
-  case class WorkIsDone(workerId: String, workId: String, result: Any)
+  case class WorkIsDone(workerId: String, workId: String, result: String)
   case class WorkFailed(workerId: String, workId: String)
 
   // Messages to Workers
@@ -21,17 +21,17 @@ object MasterWorkerProtocol {
 }
 
 object WorkExecutorProtocol {
-  case class DoWork(n: Any)
-  case class WorkComplete(result: Any)
+  case class DoWork(n: String)
+  case class WorkComplete(result: String)
   type WorkExecutorProps = () => Props
 }
 
 
 // TRANSPORT
 
-case class Transport(transportId: String, job: Any)
+case class Transport(transportId: String, job: String)
 
-case class TransportResult(transportId: String, result: Any)
+case class TransportResult(transportId: String, result: String)
 
 
 object MasterTransporterProtocol {
@@ -39,7 +39,7 @@ object MasterTransporterProtocol {
   case class RegisterTransporter(transporterId: String)
   case class DeRegisterTransporter(transporterId: String)
   case class TransporterRequestsTransport(transporterId: String)
-  case class TransportIsDone(transporterId: String, transportId: String, result: Any)
+  case class TransportIsDone(transporterId: String, transportId: String, result: String)
   case class TransportFailed(transporterId: String, transportId: String)
 
   // Messages to Transporters
@@ -48,9 +48,9 @@ object MasterTransporterProtocol {
 }
 
 object TransportExecutorProtocol {
-  case class DoTransport(n: Any)
-  case class TransportComplete(result: Any)
-  case class DoTransfer(transportId: String, n: Any)
-  case class TransferComplete(transportId: String, n: Any)
+  case class DoTransport(n: String)
+  case class TransportComplete(result: String)
+  case class DoTransfer(transportId: String, n: String)
+  case class TransferComplete(transportId: String, n: String)
   type TransportExecutorProps = () => Props
 }

@@ -44,7 +44,7 @@ class Worker(masterProxy: ActorRef, workExecutorProps: WorkExecutorProtocol.Work
       // this is the only state where we reply to WorkIsReady
       masterProxy ! WorkerRequestsWork(workerId)
 
-    case Work(workId, job: Int) =>
+    case Work(workId, job: String) =>
       log.info("Got work: {}", job)
       currentWorkId = Some(workId)
       workExecutor ! WorkExecutorProtocol.DoWork(job)
@@ -63,7 +63,7 @@ class Worker(masterProxy: ActorRef, workExecutorProps: WorkExecutorProtocol.Work
 
   }
 
-  def waitForWorkIsDoneAck(result: Any): Receive = {
+  def waitForWorkIsDoneAck(result: String): Receive = {
     case Ack(id) if id == workId =>
       masterProxy ! WorkerRequestsWork(workerId)
       context.setReceiveTimeout(Duration.Undefined)

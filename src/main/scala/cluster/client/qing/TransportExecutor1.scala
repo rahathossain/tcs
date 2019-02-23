@@ -32,9 +32,9 @@ class TransportExecutor1(proxyProps: Props) extends Actor with ActorLogging with
 
   def idle: Receive = {
 
-    case DoTransfer(transportId: String, result: Any) =>
+    case DoTransfer(transportId: String, result: String) =>
       log.info(s"Transfering transportId = $transportId and result = $result")
-      val transport = Transport(transportId, transform1(result) )
+      val transport = Transport(transportId, transform1(result).toString )
       val transporterRef = sender()
       context.become(busy(transport, transporterRef))
 
@@ -69,7 +69,7 @@ class TransportExecutor1(proxyProps: Props) extends Actor with ActorLogging with
 
 
 
-  def transform1(result: Any): Int = {
+  def transform1(result: String): Int = {
     val i = result.toString.indexOf('=')
     val x = result.toString.substring(i+1).trim
     x.toInt

@@ -44,7 +44,7 @@ class Transporter(masterProxy: ActorRef, transportExecutorProps: TransportExecut
       // this is the only state where we reply to TransportIsReady
       masterProxy ! TransporterRequestsTransport(transporterId)
 
-    case Transport(transportId, job: Any) =>
+    case Transport(transportId, job: String) =>
       log.info("Got transport: {}", job)
       currentTransportId = Some(transportId)
       //transportExecutor ! TransportExecutorProtocol.DoTransport(job)
@@ -64,7 +64,7 @@ class Transporter(masterProxy: ActorRef, transportExecutorProps: TransportExecut
 
   }
 
-  def waitForTransportIsDoneAck(result: Any): Receive = {
+  def waitForTransportIsDoneAck(result: String): Receive = {
     case Ack(id) if id == transportId =>
       masterProxy ! TransporterRequestsTransport(transporterId)
       context.setReceiveTimeout(Duration.Undefined)

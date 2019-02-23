@@ -2,9 +2,9 @@ package cluster.tcs.pubsub
 
 import akka.actor.Props
 
-case class Work(workId: String, job: Any)
+case class Work(workId: String, job: String)
 
-case class WorkResult(workId: String, result: Any)
+case class WorkResult(workId: String, result: String)
 
 
 object MasterWorkerProtocol {
@@ -12,7 +12,7 @@ object MasterWorkerProtocol {
   case class RegisterWorker(workerId: String)
   case class DeRegisterWorker(workerId: String)
   case class WorkerRequestsWork(workerId: String)
-  case class WorkIsDone(workerId: String, workId: String, result: Any)
+  case class WorkIsDone(workerId: String, workId: String, result: String)
   case class WorkFailed(workerId: String, workId: String)
 
   // Messages to Workers
@@ -21,7 +21,7 @@ object MasterWorkerProtocol {
 }
 
 object WorkExecutorProtocol {
-  case class DoWork(n: Any)
-  case class WorkComplete(result: Any)
+  case class DoWork(n: String)
+  case class WorkComplete(result: String)
   type WorkExecutorProps = () => Props
 }
