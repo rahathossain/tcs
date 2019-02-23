@@ -23,7 +23,7 @@ class WorkResultRouter(transform: Any => Any, routeCondition: Any => Boolean, su
                 result, subscribeTo, eitherPublishTo, orPublishTo)
 
       def publishTo(topic: String) =
-        mediator ! DistributedPubSubMediator.Publish(topic, Work( workId, transform(result)) )
+        mediator ! DistributedPubSubMediator.Publish(topic, Work( workId, transform(result).toString) )
 
       if(routeCondition()) publishTo(eitherPublishTo) else publishTo(orPublishTo)
   }

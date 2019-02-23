@@ -44,7 +44,7 @@ class FrontEnd(proxyProps: Props) extends Actor with ActorLogging with Timers {
     case Tick =>
       workCounter += 1
       log.info("Produced work: {}", workCounter)
-      val work = Work(nextWorkId(), workCounter)
+      val work = Work(nextWorkId(), workCounter.toString)
       context.become(busy(work))
   }
 

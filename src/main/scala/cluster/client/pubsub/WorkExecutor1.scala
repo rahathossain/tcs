@@ -18,8 +18,9 @@ class WorkExecutor1 extends Actor {
   import context.dispatcher
 
   def receive = {
-    case DoWork(n: Int) =>
-      val n2 = n * n
+    case DoWork(n: String) =>
+      val x = n.toInt
+      val n2 = x * x
       val result = s"$n * $n = $n2"
 
       // simulate that the processing time varies
@@ -37,8 +38,9 @@ class WorkExecutor2 extends Actor {
   import context.dispatcher
 
   def receive = {
-    case DoWork(n: Int) =>
-      val n2 = n + n
+    case DoWork(n: String) =>
+      val x = n.toInt
+      val n2 = x + x
       val result = s"$n + $n = $n2"
 
       // simulate that the processing time varies
