@@ -285,7 +285,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
       // idempotent - redelivery from the transporter may cause duplicates, so it needs to be
       if (transportState.isDone(transportId)) {
         // previous Ack was lost, confirm again that this is done
-        sender() ! MasterTransporterProtocol.Ack(transportId)
+        sender() ! MasterTransporterProtocol.TransportAck(transportId)
       } else if (!transportState.isInProgress(transportId)) {
         log.info("Transport {} not in progress, reported as done by transporter {}", transportId, transporterId)
       } else {
@@ -294,7 +294,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         persist(TransportCompleted(transportId, result)) { event ⇒
           transportState = transportState.updated(event)
 
-          sender ! MasterTransporterProtocol.Ack(transportId)
+          sender ! MasterTransporterProtocol.TransportAck(transportId)
         }
       }
 

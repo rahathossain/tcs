@@ -44,7 +44,7 @@ object MasterTransporterProtocol {
 
   // Messages to Transporters
   case object TransportIsReady
-  case class Ack(id: String)
+  case class TransportAck(id: String)
 }
 
 object TransportExecutorProtocol {

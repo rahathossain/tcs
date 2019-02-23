@@ -65,7 +65,7 @@ class Transporter(masterProxy: ActorRef, transportExecutorProps: TransportExecut
   }
 
   def waitForTransportIsDoneAck(result: String): Receive = {
-    case Ack(id) if id == transportId =>
+    case TransportAck(id) if id == transportId =>
       masterProxy ! TransporterRequestsTransport(transporterId)
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
