@@ -1,7 +1,7 @@
 package cluster.tcs.pubsub
 
 import scala.collection.immutable.Queue
-
+import cluster.tcs.proto._
 object WorkState {
 
   def empty: WorkState = WorkState(

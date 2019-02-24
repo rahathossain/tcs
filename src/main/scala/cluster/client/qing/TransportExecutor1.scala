@@ -3,7 +3,7 @@ package cluster.client.qing
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.pattern._
 import akka.util.Timeout
-import cluster.tcs.qing._
+import cluster.tcs.proto._
 
 import scala.concurrent.duration._
 

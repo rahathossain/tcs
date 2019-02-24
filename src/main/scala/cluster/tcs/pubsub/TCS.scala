@@ -2,7 +2,7 @@ package cluster.tcs.pubsub
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings, ClusterSingletonProxy, ClusterSingletonProxySettings}
-import cluster.tcs._
+import cluster.tcs.proto._
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.duration._

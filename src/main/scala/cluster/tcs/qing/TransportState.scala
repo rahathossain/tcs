@@ -1,6 +1,7 @@
 package cluster.tcs.qing
 
 import scala.collection.immutable.Queue
+import cluster.tcs.proto._
 
 object TransportState {
 

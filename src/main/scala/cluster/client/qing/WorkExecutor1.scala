@@ -3,7 +3,7 @@ package cluster.client.qing
 import java.util.concurrent.ThreadLocalRandom
 
 import akka.actor.{Actor, Props}
-import cluster.tcs.qing._
+import cluster.tcs.proto._
 
 import scala.concurrent.duration._
 

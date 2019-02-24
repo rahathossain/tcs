@@ -3,7 +3,7 @@ package cluster.tcs.pubsub
 import akka.actor.{ActorLogging, ActorRef, Props, Timers}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
-import cluster.tcs._
+import cluster.tcs.proto._
 
 import scala.concurrent.duration.{Deadline, FiniteDuration, _}
 

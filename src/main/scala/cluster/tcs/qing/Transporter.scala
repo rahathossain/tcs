@@ -7,6 +7,8 @@ import akka.actor._
 
 import scala.concurrent.duration._
 
+import cluster.tcs.proto._
+
 /**
   * The transporter is actually more of a middle manager, delegating the actual transport
   * to the TransportExecutor, supervising it and keeping itself available to interact with the transport master.

@@ -2,7 +2,7 @@ package cluster.client.qing
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import cluster.tcs.qing.WorkResult
+import cluster.tcs.proto.WorkResult
 
 
 

@@ -6,7 +6,7 @@ import java.util.concurrent.ThreadLocalRandom
 import akka.actor.{Actor, ActorLogging, Props, Timers}
 import akka.pattern._
 import akka.util.Timeout
-import cluster.tcs.qing.{MasterAck, Work}
+import cluster.tcs.proto.{MasterAck, Work}
 
 import scala.concurrent.duration._
 

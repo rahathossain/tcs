@@ -2,6 +2,7 @@ package cluster.tcs.pubsub
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import cluster.tcs.proto._
 
 object WorkResultTransfer {
   def props(transform: Any => Any, subscribeTo: String, publishTo: String): Props =

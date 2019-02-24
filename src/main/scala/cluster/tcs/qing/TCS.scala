@@ -5,6 +5,7 @@ import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerS
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.duration._
+import cluster.tcs.proto._
 
 object TCS {
 

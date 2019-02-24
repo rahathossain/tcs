@@ -9,7 +9,7 @@ import akka.util.Timeout
 
 import scala.concurrent.duration._
 
-import cluster.tcs.pubsub._
+import cluster.tcs.proto._
 
 /**
  * Dummy front-end that periodically sends a workload to the master.

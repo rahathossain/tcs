@@ -4,7 +4,7 @@ import java.util.concurrent.ThreadLocalRandom
 import akka.actor.{Actor, Props}
 import scala.concurrent.duration._
 
-import cluster.tcs.pubsub._
+import cluster.tcs.proto._
 
 /**
  * Work executor is the actor actually performing the work.

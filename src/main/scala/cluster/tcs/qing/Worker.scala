@@ -6,6 +6,7 @@ import akka.actor.SupervisorStrategy.{Restart, Stop}
 import akka.actor._
 
 import scala.concurrent.duration._
+import cluster.tcs.proto._
 
 /**
  * The worker is actually more of a middle manager, delegating the actual work

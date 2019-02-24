@@ -2,7 +2,7 @@ package cluster.client.pubsub
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import cluster.tcs.pubsub.WorkResult
+import cluster.tcs.proto.WorkResult
 
 
 

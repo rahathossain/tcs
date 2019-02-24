@@ -7,6 +7,8 @@ import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 
 import scala.concurrent.duration.{Deadline, FiniteDuration, _}
 
+import cluster.tcs.proto._
+
 /**
  * The master actor keep tracks of all available workers, and all scheduled and ongoing work items
  */

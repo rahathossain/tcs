@@ -1,4 +1,4 @@
-package cluster.tcs.qing
+package cluster.tcs.proto
 
 import akka.actor.Props
 
