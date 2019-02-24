@@ -2,8 +2,8 @@ package cluster.tcs.proto
 
 import akka.actor.Props
 
-
-  case class MasterAck(workId: String)
+  //proto buffed
+  //case class MasterAck(workId: String)
 
   case class Work(workId: String, job: String)
   case class WorkResult(workId: String, result: String)

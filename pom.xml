@@ -24,6 +24,7 @@
 	<akka.version>2.5.19</akka.version>
 	<cassandraPluginVersion>0.91</cassandraPluginVersion>	
     <spec2.version>4.2.0</spec2.version>
+    <scalapb.version>0.8.4</scalapb.version>
   </properties>
 
   <dependencies>
@@ -61,6 +62,11 @@
         <groupId>com.typesafe.akka</groupId>
         <artifactId>akka-persistence-cassandra-launcher_${scala.compat.version}</artifactId>
         <version>${cassandraPluginVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.thesamet.scalapb</groupId>
+      <artifactId>scalapb-runtime_${scala.compat.version}</artifactId>
+      <version>${scalapb.version}</version>
     </dependency>
     <dependency>
         <groupId>com.typesafe.akka</groupId>
@@ -152,6 +158,113 @@
           </execution>
         </executions>
       </plugin>
+
+
+
+      <!-- =========================== PROTOBUF START ==========================
+          Plugin 1. Create the generated protobuf folder in target
+          Plugin 2. Add the protobuf generated folder as a source
+          Plugin 3. Compile the proto file(s)
+
+      -->
+      <!-- Plugin 1. Create the generated protobuf folder in target  -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>mkdir-generated-sources</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <target>
+                <mkdir dir="${project.build.directory}/generated-sources/protobuf"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Plugin 1. Add the protobuf generated folder as a source -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.12</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/protobuf</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Plugin 3. Compile the proto file(s) -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.5.0</version>
+        <executions>
+          <execution>
+            <id>generate-scala-protobuf-classes</id>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <mainClass>scalapb.ScalaPBC</mainClass>
+              <cleanupDaemonThreads>false</cleanupDaemonThreads>
+              <includePluginDependencies>true</includePluginDependencies>
+              <classpathScope>compile</classpathScope>
+              <executableDependency>
+                <groupId>com.thesamet.scalapb</groupId>
+                <artifactId>scalapbc_${scala.compat.version}</artifactId>
+              </executableDependency>
+              <arguments>
+                <argument>-v300</argument> <!-- for protoc v3.0.0, can be 261 for v2.6.1 -->
+                <argument>--throw</argument> <!-- Important: otherwise scalapbc will kill the VM -->
+                <argument>--proto_path=${project.basedir}/src/main/protobuf</argument>
+                <argument>--proto_path=${project.basedir}/third_party</argument>
+                <argument>--scala_out=${project.build.directory}/generated-sources/protobuf</argument>
+                <!--
+                If you need to pass generator parameters to ScalaPB, then instead of the - -scala_out line above,
+                have something like this:
+                <argument>- -scala_out=single_line_to_string,java_conversions:${project.build.directory}/generated-sources/protobuf</argument>
+
+                Note that there should be two dashes before the scala-out and not dash-space-dash
+                like above, but XML wouldn't allow two dashes inside a comment :/
+                -->
+                <argument>${project.basedir}/src/main/protobuf/proto.proto</argument>
+
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>com.thesamet.scalapb</groupId>
+            <artifactId>scalapbc_${scala.compat.version}</artifactId>
+            <version>${scalapb.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <!-- =========================== PROTOBUF END ========================== -->
+
+
+      <!-- =========================== SCALA TEST START ========================== -->
+
+      <!-- Maven SureFile Plugin -->
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
