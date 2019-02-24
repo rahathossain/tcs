@@ -125,7 +125,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         workers += (workerId -> initialWorkerState)
 
         if (workState.hasWork)
-          sender() ! WorkIsReady
+          sender() ! WorkIsReady("")
       }
 
     // #graceful-remove
@@ -245,7 +245,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         transporters += (transporterId -> initialTransporterState)
 
         if (transportState.hasTransport)
-          sender() ! TransportIsReady
+          sender() ! TransportIsReady("")
       }
 
     // #graceful-remove
@@ -352,7 +352,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
   def notifyWorkers(): Unit =
     if (workState.hasWork) {
       workers.foreach {
-        case (_, WorkerState(ref, Idle, _)) => ref ! WorkIsReady
+        case (_, WorkerState(ref, Idle, _)) => ref ! WorkIsReady("")
         case _                           => // busy
       }
     }
@@ -373,7 +373,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
   def notifyTransporters(): Unit =
     if (transportState.hasTransport) {
       transporters.foreach {
-        case (_, TransporterState(ref, TransporterIdle, _)) => ref ! TransportIsReady
+        case (_, TransporterState(ref, TransporterIdle, _)) => ref ! TransportIsReady("")
         case _                           => // busy
       }
     }

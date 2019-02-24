@@ -84,7 +84,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         workers += (workerId -> initialWorkerState)
 
         if (workState.hasWork)
-          sender() ! WorkIsReady
+          sender() ! WorkIsReady("")
       }
 
     // #graceful-remove
@@ -190,7 +190,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
   def notifyWorkers(): Unit =
     if (workState.hasWork) {
       workers.foreach {
-        case (_, WorkerState(ref, Idle, _)) => ref ! WorkIsReady
+        case (_, WorkerState(ref, Idle, _)) => ref ! WorkIsReady("")
         case _                           => // busy
       }
     }

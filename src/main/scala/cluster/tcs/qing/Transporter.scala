@@ -42,14 +42,13 @@ class Transporter(masterProxy: ActorRef, transportExecutorProps: TransportExecut
   def receive = idle
 
   def idle: Receive = {
-    case TransportIsReady =>
+    case TransportIsReady(_) =>
       // this is the only state where we reply to TransportIsReady
       masterProxy ! TransporterRequestsTransport(transporterId)
 
     case Transport(transportId, job: String) =>
       log.info("Got transport: {}", job)
       currentTransportId = Some(transportId)
-      //transportExecutor ! TransportExecutorProtocol.DoTransport(job)
       transportExecutor ! DoTransfer(transportId, job)
       context.become(transporting)
   }

@@ -5,3 +5,109 @@ package cluster.tcs;
 message MasterAck {
     string workId = 1;
 }
+
+message Work {
+    string workId = 1;
+    string job = 2;
+}
+
+message WorkResult {
+    string workId = 1;
+    string result = 2;
+}
+
+message RegisterWorker {
+    string workerId = 1;
+}
+
+message DeRegisterWorker {
+    string workerId = 1;
+}
+
+message WorkerRequestsWork {
+    string workerId = 1;
+}
+
+message WorkIsDone {
+    string workerId = 1;
+    string workId = 2;
+    string result = 3;
+}
+
+message WorkFailed {
+    string workerId = 1;
+    string workId = 2;
+}
+
+message WorkIsReady {
+    string marker = 1;
+}
+
+message WorkIsDoneAck {
+     string id = 1;
+}
+
+message ExecuteWork {
+    string n = 1;
+}
+
+message WorkExecuted {
+    string result = 1;
+}
+
+message Transport {
+    string transportId = 1;
+    string job = 2;
+}
+
+message TransportResult {
+    string transportId = 1;
+    string result = 2;
+}
+
+
+message RegisterTransporter {
+    string transporterId = 1;
+}
+
+
+message DeRegisterTransporter {
+    string transporterId = 1;
+}
+
+
+message TransporterRequestsTransport {
+    string transporterId = 1;
+}
+
+
+message TransportIsDone {
+    string transporterId = 1;
+    string transportId = 2;
+    string result = 3;
+}
+
+message TransportFailed {
+    string transporterId = 1;
+    string transportId = 2;
+}
+
+message TransportIsReady {
+    string marker = 1;
+}
+
+message TransportAck {
+    string id = 1;
+}
+
+
+message DoTransfer {
+    string transportId = 1;
+    string n = 2;
+}
+
+message TransportComplete {
+    string result = 1;
+}
+
+

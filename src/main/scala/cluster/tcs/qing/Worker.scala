@@ -41,7 +41,7 @@ class Worker(masterProxy: ActorRef, workExecutorProps: WorkExecutorProtocol.Work
   def receive = idle
 
   def idle: Receive = {
-    case WorkIsReady =>
+    case WorkIsReady(_) =>
       // this is the only state where we reply to WorkIsReady
       masterProxy ! WorkerRequestsWork(workerId)
 
