@@ -3,8 +3,7 @@ package cluster.client.qing
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.pattern._
 import akka.util.Timeout
-import cluster.tcs.qing.{Master, Transport}
-import cluster.tcs.qing.TransportExecutorProtocol.{DoTransfer, TransportComplete}
+import cluster.tcs.qing._
 
 import scala.concurrent.duration._
 
@@ -44,7 +43,7 @@ class TransportExecutor1(proxyProps: Props) extends Actor with ActorLogging with
     sendTransport(transportInProgress)
 
     {
-      case Master.Ack(transportId) =>
+      case MasterAck(transportId) =>
         log.info("Got ack for transportId {}", transportId)
         transporterRef ! TransportComplete(transportId)
         context.become(idle)

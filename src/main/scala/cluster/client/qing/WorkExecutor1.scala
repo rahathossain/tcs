@@ -3,7 +3,7 @@ package cluster.client.qing
 import java.util.concurrent.ThreadLocalRandom
 
 import akka.actor.{Actor, Props}
-import cluster.tcs.qing.WorkExecutorProtocol.{DoWork, WorkComplete}
+import cluster.tcs.qing._
 
 import scala.concurrent.duration._
 
@@ -18,14 +18,14 @@ class WorkExecutor1 extends Actor {
   import context.dispatcher
 
   def receive = {
-    case DoWork(n1: String) =>
+    case ExecuteWork(n1: String) =>
       val n = n1.toInt
       val n2 = n * n
       val result = s"$n * $n = $n2"
 
       // simulate that the processing time varies
       val randomProcessingTime = ThreadLocalRandom.current.nextInt(1, 3).seconds
-      context.system.scheduler.scheduleOnce(randomProcessingTime, sender(), WorkComplete(result))
+      context.system.scheduler.scheduleOnce(randomProcessingTime, sender(), WorkExecuted(result))
   }
 
 }
@@ -38,14 +38,14 @@ class WorkExecutor2 extends Actor {
   import context.dispatcher
 
   def receive = {
-    case DoWork(n1: String) =>
+    case ExecuteWork(n1: String) =>
       val n = n1.toInt
       val n2 = n + n
       val result = s"$n + $n = $n2"
 
       // simulate that the processing time varies
       val randomProcessingTime = ThreadLocalRandom.current.nextInt(1, 3).seconds
-      context.system.scheduler.scheduleOnce(randomProcessingTime, sender(), WorkComplete(result))
+      context.system.scheduler.scheduleOnce(randomProcessingTime, sender(), WorkExecuted(result))
 
   }
 

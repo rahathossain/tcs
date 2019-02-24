@@ -52,7 +52,7 @@ class FrontEnd(proxyProps: Props) extends Actor with ActorLogging with Timers {
     sendWork(workInProgress)
 
     {
-      case Master.Ack(workId) =>
+      case MasterAck(workId) =>
         log.info("Got ack for workId {}", workId)
         val nextTick = ThreadLocalRandom.current.nextInt(3, 10).seconds
         timers.startSingleTimer(s"tick", Tick, nextTick)

@@ -20,7 +20,7 @@ object Worker {
 
 class Worker(masterProxy: ActorRef, workExecutorProps: WorkExecutorProtocol.WorkExecutorProps)
   extends Actor with Timers with ActorLogging {
-  import MasterWorkerProtocol._
+  //import MasterWorkerProtocol._
   import context.dispatcher
 
 
@@ -47,12 +47,12 @@ class Worker(masterProxy: ActorRef, workExecutorProps: WorkExecutorProtocol.Work
     case Work(workId, job: String) =>
       log.info("Got work: {}", job)
       currentWorkId = Some(workId)
-      workExecutor ! WorkExecutorProtocol.DoWork(job)
+      workExecutor ! ExecuteWork(job)
       context.become(working)
   }
 
   def working: Receive = {
-    case WorkExecutorProtocol.WorkComplete(result) =>
+    case WorkExecuted(result) =>
       log.info("Work is complete. Result {}.", result)
       masterProxy ! WorkIsDone(workerId, workId, result)
       context.setReceiveTimeout(5.seconds)
@@ -64,7 +64,7 @@ class Worker(masterProxy: ActorRef, workExecutorProps: WorkExecutorProtocol.Work
   }
 
   def waitForWorkIsDoneAck(result: String): Receive = {
-    case Ack(id) if id == workId =>
+    case WorkIsDoneAck(id) if id == workId =>
       masterProxy ! WorkerRequestsWork(workerId)
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)

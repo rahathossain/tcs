@@ -20,7 +20,7 @@ object Transporter {
 
 class Transporter(masterProxy: ActorRef, transportExecutorProps: TransportExecutorProtocol.TransportExecutorProps)
   extends Actor with Timers with ActorLogging {
-  import MasterTransporterProtocol._
+  //import MasterTransporterProtocol._
   import context.dispatcher
 
 
@@ -48,12 +48,12 @@ class Transporter(masterProxy: ActorRef, transportExecutorProps: TransportExecut
       log.info("Got transport: {}", job)
       currentTransportId = Some(transportId)
       //transportExecutor ! TransportExecutorProtocol.DoTransport(job)
-      transportExecutor ! TransportExecutorProtocol.DoTransfer(transportId, job)
+      transportExecutor ! DoTransfer(transportId, job)
       context.become(transporting)
   }
 
   def transporting: Receive = {
-    case TransportExecutorProtocol.TransportComplete(result) =>
+    case TransportComplete(result) =>
       log.info("Transport is complete. Result {}.", result)
       masterProxy ! TransportIsDone(transporterId, transportId, result)
       context.setReceiveTimeout(5.seconds)

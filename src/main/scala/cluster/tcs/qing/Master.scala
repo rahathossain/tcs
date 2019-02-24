@@ -15,7 +15,7 @@ object Master {
   def props(id: String, workTimeout: FiniteDuration, inTopic: String ,resultsTopic: String): Props =
     Props(new Master(id, workTimeout, inTopic, resultsTopic))
 
-  case class Ack(workId: String)
+
 
   private sealed trait WorkerStatus
   private case object Idle extends WorkerStatus
@@ -111,7 +111,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
 
   override def receiveCommand: Receive = {
     case _: DistributedPubSubMediator.SubscribeAck =>
-    case MasterWorkerProtocol.RegisterWorker(workerId) =>
+    case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
         workers += (workerId -> workers(workerId).copy(ref = sender(), staleWorkerDeadline = newStaleWorkerDeadline()))
       } else {
@@ -123,11 +123,11 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         workers += (workerId -> initialWorkerState)
 
         if (workState.hasWork)
-          sender() ! MasterWorkerProtocol.WorkIsReady
+          sender() ! WorkIsReady
       }
 
     // #graceful-remove
-    case MasterWorkerProtocol.DeRegisterWorker(workerId) =>
+    case DeRegisterWorker(workerId) =>
       workers.get(workerId) match {
         case Some(WorkerState(_, Busy(workId, _), _)) =>
           // there was a workload assigned to the worker when it left
@@ -143,7 +143,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
       workers -= workerId
     // #graceful-remove
 
-    case MasterWorkerProtocol.WorkerRequestsWork(workerId) =>
+    case WorkerRequestsWork(workerId) =>
       if (workState.hasWork) {
         workers.get(workerId) match {
           case Some(workerState @ WorkerState(_, Idle, _)) =>
@@ -161,11 +161,11 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         }
       }
 
-    case MasterWorkerProtocol.WorkIsDone(workerId, workId, result) =>
+    case WorkIsDone(workerId, workId, result) =>
       // idempotent - redelivery from the worker may cause duplicates, so it needs to be
       if (workState.isDone(workId)) {
         // previous Ack was lost, confirm again that this is done
-        sender() ! MasterWorkerProtocol.Ack(workId)
+        sender() ! WorkIsDoneAck(workId)
       } else if (!workState.isInProgress(workId)) {
         log.info("Work {} not in progress, reported as done by worker {}", workId, workerId)
       } else {
@@ -175,14 +175,14 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
           workState = workState.updated(event)
           //mediator ! DistributedPubSubMediator.Publish(resultsTopic, WorkResult(workId, result))
           // Ack back to original sender
-          sender ! MasterWorkerProtocol.Ack(workId)
+          sender ! WorkIsDoneAck(workId)
 
           // #TRANSPORTER
           transportResult(Transport(workId, result))
         }
       }
 
-    case MasterWorkerProtocol.WorkFailed(workerId, workId) =>
+    case WorkFailed(workerId, workId) =>
       if (workState.isInProgress(workId)) {
         log.info("Work {} failed by worker {}", workId, workerId)
         changeWorkerToIdle(workerId, workId)
@@ -196,12 +196,12 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
     case work: Work =>
       // idempotent
       if (workState.isAccepted(work.workId)) {
-        sender() ! Master.Ack(work.workId)
+        sender() ! MasterAck(work.workId)
       } else {
         log.info("Accepted work: {} - by {}", work.workId, id)
         persist(WorkAccepted(work)) { event ⇒
           // Ack back to original sender
-          sender() ! Master.Ack(work.workId)
+          sender() ! MasterAck(work.workId)
           workState = workState.updated(event)
           notifyWorkers()
         }
@@ -231,7 +231,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
 
 
     //#TRANSPORT
-    case MasterTransporterProtocol.RegisterTransporter(transporterId) =>
+    case RegisterTransporter(transporterId) =>
       if (transporters.contains(transporterId)) {
         transporters += (transporterId -> transporters(transporterId).copy(ref = sender(), staleTransporterDeadline = newStaleTransporterDeadline()))
       } else {
@@ -243,11 +243,11 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         transporters += (transporterId -> initialTransporterState)
 
         if (transportState.hasTransport)
-          sender() ! MasterTransporterProtocol.TransportIsReady
+          sender() ! TransportIsReady
       }
 
     // #graceful-remove
-    case MasterTransporterProtocol.DeRegisterTransporter(transporterId) =>
+    case DeRegisterTransporter(transporterId) =>
       transporters.get(transporterId) match {
         case Some(TransporterState(_, TransporterBusy(transportId, _), _)) =>
           // there was a transportload assigned to the transporter when it left
@@ -263,7 +263,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
       transporters -= transporterId
     // #graceful-remove
 
-    case MasterTransporterProtocol.TransporterRequestsTransport(transporterId) =>
+    case TransporterRequestsTransport(transporterId) =>
       if (transportState.hasTransport) {
         transporters.get(transporterId) match {
           case Some(transporterState @ TransporterState(_, TransporterIdle, _)) =>
@@ -281,11 +281,11 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         }
       }
 
-    case MasterTransporterProtocol.TransportIsDone(transporterId, transportId, result) =>
+    case TransportIsDone(transporterId, transportId, result) =>
       // idempotent - redelivery from the transporter may cause duplicates, so it needs to be
       if (transportState.isDone(transportId)) {
         // previous Ack was lost, confirm again that this is done
-        sender() ! MasterTransporterProtocol.TransportAck(transportId)
+        sender() ! TransportAck(transportId)
       } else if (!transportState.isInProgress(transportId)) {
         log.info("Transport {} not in progress, reported as done by transporter {}", transportId, transporterId)
       } else {
@@ -294,11 +294,11 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         persist(TransportCompleted(transportId, result)) { event ⇒
           transportState = transportState.updated(event)
 
-          sender ! MasterTransporterProtocol.TransportAck(transportId)
+          sender ! TransportAck(transportId)
         }
       }
 
-    case MasterTransporterProtocol.TransportFailed(transporterId, transportId) =>
+    case TransportFailed(transporterId, transportId) =>
       if (transportState.isInProgress(transportId)) {
         log.info("Transport {} failed by transporter {}", transportId, transporterId)
         changeTransporterToTransporterIdle(transporterId, transportId)
@@ -312,12 +312,12 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
     case transport: Transport =>
       // idempotent
       if (transportState.isAccepted(transport.transportId)) {
-        sender() ! Master.Ack(transport.transportId)
+        sender() ! MasterAck(transport.transportId)
       } else {
         log.info("Accepted transport: {} - by {}", transport.transportId, id)
         persist(TransportAccepted(transport)) { event ⇒
           // Ack back to original sender
-          sender() ! Master.Ack(transport.transportId)
+          sender() ! MasterAck(transport.transportId)
           transportState = transportState.updated(event)
           notifyTransporters()
         }
@@ -350,7 +350,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
   def notifyWorkers(): Unit =
     if (workState.hasWork) {
       workers.foreach {
-        case (_, WorkerState(ref, Idle, _)) => ref ! MasterWorkerProtocol.WorkIsReady
+        case (_, WorkerState(ref, Idle, _)) => ref ! WorkIsReady
         case _                           => // busy
       }
     }
@@ -371,7 +371,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
   def notifyTransporters(): Unit =
     if (transportState.hasTransport) {
       transporters.foreach {
-        case (_, TransporterState(ref, TransporterIdle, _)) => ref ! MasterTransporterProtocol.TransportIsReady
+        case (_, TransporterState(ref, TransporterIdle, _)) => ref ! TransportIsReady
         case _                           => // busy
       }
     }
@@ -393,12 +393,12 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         case transport: Transport =>
           // idempotent
           if (transportState.isAccepted(transport.transportId)) {
-            sender() ! Master.Ack(transport.transportId)
+            sender() ! MasterAck(transport.transportId)
           } else {
             log.info("Accepted transport: {} - by {}", transport.transportId, id)
             persist(TransportAccepted(transport)) { event ⇒
               // Ack back to original sender
-              sender() ! Master.Ack(transport.transportId)
+              sender() ! MasterAck(transport.transportId)
               transportState = transportState.updated(event)
               notifyTransporters()
             }

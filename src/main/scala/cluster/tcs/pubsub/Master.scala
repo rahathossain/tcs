@@ -15,7 +15,7 @@ object Master {
   def props(id: String, workTimeout: FiniteDuration, inTopic: String ,resultsTopic: String): Props =
     Props(new Master(id, workTimeout, inTopic, resultsTopic))
 
-  case class Ack(workId: String)
+
 
   private sealed trait WorkerStatus
   private case object Idle extends WorkerStatus
@@ -72,7 +72,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
 
   override def receiveCommand: Receive = {
     case _: DistributedPubSubMediator.SubscribeAck =>
-    case MasterWorkerProtocol.RegisterWorker(workerId) =>
+    case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
         workers += (workerId -> workers(workerId).copy(ref = sender(), staleWorkerDeadline = newStaleWorkerDeadline()))
       } else {
@@ -84,11 +84,11 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         workers += (workerId -> initialWorkerState)
 
         if (workState.hasWork)
-          sender() ! MasterWorkerProtocol.WorkIsReady
+          sender() ! WorkIsReady
       }
 
     // #graceful-remove
-    case MasterWorkerProtocol.DeRegisterWorker(workerId) =>
+    case DeRegisterWorker(workerId) =>
       workers.get(workerId) match {
         case Some(WorkerState(_, Busy(workId, _), _)) =>
           // there was a workload assigned to the worker when it left
@@ -104,7 +104,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
       workers -= workerId
     // #graceful-remove
 
-    case MasterWorkerProtocol.WorkerRequestsWork(workerId) =>
+    case WorkerRequestsWork(workerId) =>
       if (workState.hasWork) {
         workers.get(workerId) match {
           case Some(workerState @ WorkerState(_, Idle, _)) =>
@@ -122,11 +122,11 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         }
       }
 
-    case MasterWorkerProtocol.WorkIsDone(workerId, workId, result) =>
+    case WorkIsDone(workerId, workId, result) =>
       // idempotent - redelivery from the worker may cause duplicates, so it needs to be
       if (workState.isDone(workId)) {
         // previous Ack was lost, confirm again that this is done
-        sender() ! MasterWorkerProtocol.Ack(workId)
+        sender() ! WorkIsDoneAck(workId)
       } else if (!workState.isInProgress(workId)) {
         log.info("Work {} not in progress, reported as done by worker {}", workId, workerId)
       } else {
@@ -136,11 +136,11 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
           workState = workState.updated(event)
           mediator ! DistributedPubSubMediator.Publish(resultsTopic, WorkResult(workId, result))
           // Ack back to original sender
-          sender ! MasterWorkerProtocol.Ack(workId)
+          sender ! WorkIsDoneAck(workId)
         }
       }
 
-    case MasterWorkerProtocol.WorkFailed(workerId, workId) =>
+    case WorkFailed(workerId, workId) =>
       if (workState.isInProgress(workId)) {
         log.info("Work {} failed by worker {}", workId, workerId)
         changeWorkerToIdle(workerId, workId)
@@ -154,12 +154,12 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
     case work: Work =>
       // idempotent
       if (workState.isAccepted(work.workId)) {
-        sender() ! Master.Ack(work.workId)
+        sender() ! MasterAck(work.workId)
       } else {
         log.info("Accepted work: {} - by {}", work.workId, id)
         persist(WorkAccepted(work)) { event ⇒
           // Ack back to original sender
-          sender() ! Master.Ack(work.workId)
+          sender() ! MasterAck(work.workId)
           workState = workState.updated(event)
           notifyWorkers()
         }
@@ -190,7 +190,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
   def notifyWorkers(): Unit =
     if (workState.hasWork) {
       workers.foreach {
-        case (_, WorkerState(ref, Idle, _)) => ref ! MasterWorkerProtocol.WorkIsReady
+        case (_, WorkerState(ref, Idle, _)) => ref ! WorkIsReady
         case _                           => // busy
       }
     }

@@ -6,7 +6,7 @@ import java.util.concurrent.ThreadLocalRandom
 import akka.actor.{Actor, ActorLogging, Props, Timers}
 import akka.pattern._
 import akka.util.Timeout
-import cluster.tcs.qing.{Master, Work}
+import cluster.tcs.qing.{MasterAck, Work}
 
 import scala.concurrent.duration._
 
@@ -51,7 +51,7 @@ class FrontEnd(proxyProps: Props) extends Actor with ActorLogging with Timers {
     sendWork(workInProgress)
 
     {
-      case Master.Ack(workId) =>
+      case MasterAck(workId) =>
         log.info("Got ack for workId {}", workId)
         val nextTick = ThreadLocalRandom.current.nextInt(3, 10).seconds
         timers.startSingleTimer(s"tick", Tick, nextTick)
