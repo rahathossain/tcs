@@ -53,10 +53,23 @@
 		<artifactId>akka-persistence_${scala.compat.version}</artifactId>
 		<version>${akka.version}</version>
 	</dependency>
+
+    <dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-persistence-query_${scala.compat.version}</artifactId>
+      <version>${akka.version}</version>
+    </dependency>
+
     <dependency>
         <groupId>com.typesafe.akka</groupId>
         <artifactId>akka-persistence-cassandra_${scala.compat.version}</artifactId>
         <version>${cassandraPluginVersion}</version>
+        <exclusions>
+          <exclusion>
+              <groupId>com.typesafe.akka</groupId>
+              <artifactId>akka-persistence-query_${scala.compat.version}</artifactId>
+          </exclusion>
+        </exclusions>
     </dependency>
     <dependency>
         <groupId>com.typesafe.akka</groupId>
