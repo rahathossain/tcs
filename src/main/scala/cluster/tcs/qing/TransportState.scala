@@ -11,14 +11,8 @@ object TransportState {
     acceptedTransportIds = Set.empty,
     doneTransportIds = Set.empty)
 
-  trait TransportDomainEvent
-  // #events
-  case class TransportAccepted(transport: Transport) extends TransportDomainEvent
-  case class TransportStarted(transportId: String) extends TransportDomainEvent
-  case class TransportCompleted(transportId: String, result: Any) extends TransportDomainEvent
-  case class TransporterFailed(transportId: String) extends TransportDomainEvent
-  case class TransporterTimedOut(transportId: String) extends TransportDomainEvent
-  // #events
+
+
 }
 
 case class TransportState private (
@@ -35,33 +29,43 @@ case class TransportState private (
   def isInProgress(transportId: String): Boolean = transportInProgress.contains(transportId)
   def isDone(transportId: String): Boolean = doneTransportIds.contains(transportId)
 
-  def updated(event: TransportDomainEvent): TransportState = event match {
-    case TransportAccepted(transport) ⇒
+  def updated(event: TransportAccepted) = event match {
+    case TransportAccepted(transport_op) ⇒
+      val transport = transport_op.get
       copy(
         pendingTransport = pendingTransport enqueue transport,
         acceptedTransportIds = acceptedTransportIds + transport.transportId)
+  }
 
+  def updated(event: TransportStarted) = event match {
     case TransportStarted(transportId) ⇒
       val (transport, rest) = pendingTransport.dequeue
       require(transportId == transport.transportId, s"TransportStarted expected transportId $transportId == ${transport.transportId}")
       copy(
         pendingTransport = rest,
         transportInProgress = transportInProgress + (transportId -> transport))
+  }
 
+  def updated(event: TransportCompleted) = event match {
     case TransportCompleted(transportId, result) ⇒
       copy(
         transportInProgress = transportInProgress - transportId,
         doneTransportIds = doneTransportIds + transportId)
+  }
 
+  def updated(event: TransporterFailed) = event match {
     case TransporterFailed(transportId) ⇒
       copy(
         pendingTransport = pendingTransport enqueue transportInProgress(transportId),
         transportInProgress = transportInProgress - transportId)
+  }
 
+  def updated(event: TransporterTimedOut) = event match {
     case TransporterTimedOut(transportId) ⇒
       copy(
         pendingTransport = pendingTransport enqueue transportInProgress(transportId),
         transportInProgress = transportInProgress - transportId)
   }
+
 
 }

@@ -58,3 +58,20 @@ import akka.actor.Props
   object TransportExecutorProtocol {
     type TransportExecutorProps = () => Props
   }
+
+
+  // #events
+  //case class WorkAccepted(work: Work)
+  //case class WorkStarted(workId: String)
+  //case class WorkCompleted(workId: String, result: String)
+  //case class WorkerFailed(workId: String)
+  //case class WorkerTimedOut(workId: String)
+  // #events
+
+  // #events
+  //case class TransportAccepted(transport: Transport)
+  //case class TransportStarted(transportId: String)
+  //case class TransportCompleted(transportId: String, result: String)
+  //case class TransporterFailed(transportId: String)
+  //case class TransporterTimedOut(transportId: String)
+  // #events

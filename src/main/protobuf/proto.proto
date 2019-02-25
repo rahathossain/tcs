@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cluster.tcs;
 
+// ## - WORK related protocols
 message MasterAck {
     string workId = 1;
 }
@@ -16,6 +17,7 @@ message WorkResult {
     string result = 2;
 }
 
+// # - Messages from Workers
 message RegisterWorker {
     string workerId = 1;
 }
@@ -39,14 +41,16 @@ message WorkFailed {
     string workId = 2;
 }
 
+// # - Messages to Workers
 message WorkIsReady {
     string marker = 1;
 }
 
 message WorkIsDoneAck {
-     string id = 1;
+    string id = 1;
 }
 
+// # - WorkExecutorProtocol
 message ExecuteWork {
     string n = 1;
 }
@@ -54,6 +58,9 @@ message ExecuteWork {
 message WorkExecuted {
     string result = 1;
 }
+
+// ## - TRANSPORT related protocols
+
 
 message Transport {
     string transportId = 1;
@@ -65,7 +72,7 @@ message TransportResult {
     string result = 2;
 }
 
-
+// # - Messages from Transporters
 message RegisterTransporter {
     string transporterId = 1;
 }
@@ -92,6 +99,7 @@ message TransportFailed {
     string transportId = 2;
 }
 
+// # - Messages to Transporters
 message TransportIsReady {
     string marker = 1;
 }
@@ -100,7 +108,7 @@ message TransportAck {
     string id = 1;
 }
 
-
+// # - TransportExecutorProtocol
 message DoTransfer {
     string transportId = 1;
     string n = 2;
@@ -110,4 +118,43 @@ message TransportComplete {
     string result = 1;
 }
 
+
+//# - WORK events
+message WorkAccepted {
+    Work work = 1;
+}
+message WorkStarted {
+    string workId = 1;
+}
+message WorkCompleted {
+    string workId = 1;
+    string result = 2;
+}
+message WorkerFailed {
+    string workId = 1;
+}
+message WorkerTimedOut {
+    string workId = 1;
+}
+
+
+
+//# - TRANSPORT events
+
+message TransportAccepted {
+    Transport transport = 1;
+}
+message TransportStarted {
+    string transportId = 1;
+}
+message TransportCompleted {
+    string transportId = 1;
+    string result = 2;
+}
+message TransporterFailed {
+    string transportId = 1;
+}
+message TransporterTimedOut {
+    string transportId = 1;
+}
 

@@ -10,58 +10,66 @@ object WorkState {
     workInProgress = Map.empty,
     acceptedWorkIds = Set.empty,
     doneWorkIds = Set.empty)
-
-  trait WorkDomainEvent
-  // #events
-  case class WorkAccepted(work: Work) extends WorkDomainEvent
-  case class WorkStarted(workId: String) extends WorkDomainEvent
-  case class WorkCompleted(workId: String, result: Any) extends WorkDomainEvent
-  case class WorkerFailed(workId: String) extends WorkDomainEvent
-  case class WorkerTimedOut(workId: String) extends WorkDomainEvent
-  // #events
 }
 
-case class WorkState private (
-  private val pendingWork: Queue[Work],
-  private val workInProgress: Map[String, Work],
-  private val acceptedWorkIds: Set[String],
-  private val doneWorkIds: Set[String]) {
+case class WorkState private(
+                              private val pendingWork: Queue[Work],
+                              private val workInProgress: Map[String, Work],
+                              private val acceptedWorkIds: Set[String],
+                              private val doneWorkIds: Set[String]) {
 
-  import WorkState._
+
 
   def hasWork: Boolean = pendingWork.nonEmpty
+
   def nextWork: Work = pendingWork.head
+
   def isAccepted(workId: String): Boolean = acceptedWorkIds.contains(workId)
+
   def isInProgress(workId: String): Boolean = workInProgress.contains(workId)
+
   def isDone(workId: String): Boolean = doneWorkIds.contains(workId)
 
-  def updated(event: WorkDomainEvent): WorkState = event match {
-    case WorkAccepted(work) ⇒
+  def updated(event: WorkAccepted): WorkState = event match {
+    case WorkAccepted(work_op) ⇒
+      val work = work_op.get
       copy(
         pendingWork = pendingWork enqueue work,
         acceptedWorkIds = acceptedWorkIds + work.workId)
+  }
 
+
+  def updated(event: WorkStarted): WorkState = event match {
     case WorkStarted(workId) ⇒
       val (work, rest) = pendingWork.dequeue
       require(workId == work.workId, s"WorkStarted expected workId $workId == ${work.workId}")
       copy(
         pendingWork = rest,
         workInProgress = workInProgress + (workId -> work))
+  }
 
+  def updated(event: WorkCompleted): WorkState = event match {
     case WorkCompleted(workId, result) ⇒
       copy(
         workInProgress = workInProgress - workId,
         doneWorkIds = doneWorkIds + workId)
+  }
 
+
+  def updated(event: WorkerFailed): WorkState = event match {
     case WorkerFailed(workId) ⇒
       copy(
         pendingWork = pendingWork enqueue workInProgress(workId),
         workInProgress = workInProgress - workId)
+  }
 
+
+  def updated(event: WorkerTimedOut): WorkState = event match {
     case WorkerTimedOut(workId) ⇒
       copy(
         pendingWork = pendingWork enqueue workInProgress(workId),
         workInProgress = workInProgress - workId)
   }
+
 
 }

@@ -4,10 +4,8 @@ import akka.actor.{ActorLogging, ActorRef, Props, Timers}
 import akka.cluster.pubsub.DistributedPubSubMediator
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 
-
 import scala.concurrent.duration.{Deadline, FiniteDuration, _}
-
-import cluster.tcs.proto._
+import cluster.tcs.proto.{WorkAccepted, WorkCompleted, WorkStarted, WorkerFailed, WorkerTimedOut, _}
 
 /**
  * The master actor keep tracks of all available workers, and all scheduled and ongoing work items
@@ -38,7 +36,7 @@ object Master {
 class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTopic: String)
                           extends Timers with PersistentActor with ActorLogging {
   import Master._
-  import WorkState._
+
 
   override val persistenceId: String = id
 
@@ -89,11 +87,35 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
       log.info("Got snapshot work state")
       workState = workStateSnapshot
 
-    case event: WorkDomainEvent =>
+      //# - START Work Domain Event
+
+    case event: WorkAccepted =>
       // only update current state by applying the event, no side effects
       workState = workState.updated(event)
       log.info("Replayed {}", event.getClass.getSimpleName)
 
+    case event: WorkStarted =>
+      // only update current state by applying the event, no side effects
+      workState = workState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: WorkCompleted =>
+      // only update current state by applying the event, no side effects
+      workState = workState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: WorkerFailed =>
+      // only update current state by applying the event, no side effects
+      workState = workState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: WorkerTimedOut =>
+      // only update current state by applying the event, no side effects
+      workState = workState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+
+    //# - END Work Domain Event
 
     case SnapshotOffer(_, transportStateSnapshot: TransportState) =>
       // If we would have  logic triggering snapshots in the actor
@@ -101,10 +123,33 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
       log.info("Got snapshot transport state")
       transportState = transportStateSnapshot
 
-    case event: TransportDomainEvent =>
+
+    case event: TransportAccepted =>
       // only update current state by applying the event, no side effects
       transportState = transportState.updated(event)
       log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: TransportStarted =>
+      // only update current state by applying the event, no side effects
+      transportState = transportState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: TransportCompleted =>
+      // only update current state by applying the event, no side effects
+      transportState = transportState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: TransporterFailed =>
+      // only update current state by applying the event, no side effects
+      transportState = transportState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: TransporterTimedOut =>
+      // only update current state by applying the event, no side effects
+      transportState = transportState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+
 
     case RecoveryCompleted =>
       log.info("Recovery completed")
@@ -201,7 +246,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         sender() ! MasterAck(work.workId)
       } else {
         log.info("Accepted work: {} - by {}", work.workId, id)
-        persist(WorkAccepted(work)) { event ⇒
+        persist(WorkAccepted(Option(work))) { event ⇒
           // Ack back to original sender
           sender() ! MasterAck(work.workId)
           workState = workState.updated(event)
@@ -317,7 +362,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         sender() ! MasterAck(transport.transportId)
       } else {
         log.info("Accepted transport: {} - by {}", transport.transportId, id)
-        persist(TransportAccepted(transport)) { event ⇒
+        persist(TransportAccepted(Option(transport))) { event ⇒
           // Ack back to original sender
           sender() ! MasterAck(transport.transportId)
           transportState = transportState.updated(event)
@@ -398,7 +443,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
             sender() ! MasterAck(transport.transportId)
           } else {
             log.info("Accepted transport: {} - by {}", transport.transportId, id)
-            persist(TransportAccepted(transport)) { event ⇒
+            persist(TransportAccepted(Option(transport))) { event ⇒
               // Ack back to original sender
               sender() ! MasterAck(transport.transportId)
               transportState = transportState.updated(event)

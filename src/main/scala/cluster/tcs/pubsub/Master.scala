@@ -60,10 +60,31 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
       log.info("Got snapshot work state")
       workState = workStateSnapshot
 
-    case event: WorkDomainEvent =>
+    case event: WorkAccepted =>
       // only update current state by applying the event, no side effects
       workState = workState.updated(event)
       log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: WorkStarted =>
+      // only update current state by applying the event, no side effects
+      workState = workState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: WorkCompleted =>
+      // only update current state by applying the event, no side effects
+      workState = workState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: WorkerFailed =>
+      // only update current state by applying the event, no side effects
+      workState = workState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
+    case event: WorkerTimedOut =>
+      // only update current state by applying the event, no side effects
+      workState = workState.updated(event)
+      log.info("Replayed {}", event.getClass.getSimpleName)
+
 
     case RecoveryCompleted =>
       log.info("Recovery completed")
@@ -157,7 +178,7 @@ class Master(id: String, workTimeout: FiniteDuration, inTopic: String, resultsTo
         sender() ! MasterAck(work.workId)
       } else {
         log.info("Accepted work: {} - by {}", work.workId, id)
-        persist(WorkAccepted(work)) { event ⇒
+        persist(WorkAccepted(Option(work))) { event ⇒
           // Ack back to original sender
           sender() ! MasterAck(work.workId)
           workState = workState.updated(event)
