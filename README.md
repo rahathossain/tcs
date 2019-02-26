@@ -3,8 +3,8 @@ Team of Cluster Singleton
 
 # What is Team of Cluster Singleton or TCS?
 
-TCS is reusable, resilient/fault tolerant, highly available and durable software component 
-to design special micro-services based cluster solution.
+Goal of TCS is is to provide a reusable, resilient/fault tolerant, highly available and durable software component  
+which can be used to design special micro-services based cluster solution.
 
 A TCS is clustered group of micro-services, capable of performing some type of custom work in parallel 
 using its worker nodes while also able to manage these works using its master node, and also provide options 
@@ -48,6 +48,17 @@ master node can assign work. Depends on the load of work, we can create more wor
 work can be done in parallel. In case of message queuing, like Worker node, we introduced Transporter nodes, 
 which registered themselves with the master node, so that master node can assign message to be transfer to another 
 Master node of another TCS. 
+
+### TCS Communication - Serialization Protocols 
+ 
+Java serialization has been disabled for TCS by setting `akka.actor.allow-java-serialization=off`, 
+Instead TCS is using google protocol buffer. 
+
+```properties
+    serializers {      
+      proto = "akka.remote.serialization.ProtobufSerializer"
+    }
+```
 
 ### TCS conclusion 
 Finally we can say, team of cluster singleton or TCS is a cluster of distributed actors 
@@ -161,18 +172,7 @@ Inspiration of TCS came from lightbend demo project,
  another then we simply need multiple copy of the above module and wire them together. TCS tries to provide that
  cascading functionality out of the box. 
  
- ## Protocols [TODO]
  
- `case class Work(workId: String, job: Any)`
-   * Produced By: FrontEnd, WorkResultRouter, WorkResultSplitter, WorkResultTransfer
-   * Forward By: Master   
-   * Consumed By: Worker
- 
- 
- `case class WorkResult(workId: String, result: Any)`
-   * Produced By: Master
-   * Consumed By: WorkResultConsumer, WorkResultRouter, WorkResultSplitter, WorkResultTransfer 
-
  
 # TODO
 * At the moment there's no timeout options for TCS worker.
