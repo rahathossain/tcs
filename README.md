@@ -3,17 +3,17 @@ Team of Cluster Singleton
 
 # What is Team of Cluster Singleton or TCS?
 
-Goal of TCS is is to provide a reusable, resilient/fault tolerant, highly available and durable software component  
+Goal of TCS is to provide a reusable, resilient/fault tolerant, highly available and durable software component  
 which can be used to design special micro-services based cluster solution.
 
-A TCS is clustered group of micro-services, capable of performing some type of custom work in parallel 
+A TCS is clustered group of micro-services, capable of performing some type of custom defined work in parallel 
 using its worker nodes while also able to manage these works using its master node, and also provide options 
 to communicate to other TCS and external clients. One instance of TCS should have at least two nodes, 
 e.g. at least one Master Node and one Worker Node. TCS can have one optional Helper Node as well. 
 
 ### TCS Master node: only one active master node 
-The active master node of a TCS, is the coordinator of works perform the TCS. As an example: 
-active master node can make sure that, a single work gets done only once.   
+The active master node of a TCS, is the coordinator of the works perform by the TCS. As an example: 
+active master node can make sure that, a single work gets done only once. 
 By design there is only one active master node at any single point of time in a running cluster.  
 However, design also ensures that the active master node is not the single point of failure, by providing 
 the options to run at multiple instances of that TCS which would introduce some standby master nodes. 
